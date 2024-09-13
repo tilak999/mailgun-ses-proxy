@@ -1,15 +1,14 @@
 import 'dotenv/config'
 import Fastify from 'fastify'
 import multipart from '@fastify/multipart'
+import formatBody from './lib.js'
 
 const fastify = Fastify({ logger: true })
 fastify.register(multipart, { attachFieldsToBody: true })
 
-
-// Declare a route
-fastify.post('/v3/:domainName/messages', async function handler(request, reply) {
-    console.log(request.body)
-    return request.body
+fastify.post('/v3/:domainName/messages', async function handler(req, reply) {
+    let body = formatBody(req.body)
+    return { id: body["v:email-id"] }
 })
 
 fastify.listen({ port: process.env.PORT || 8080 }).catch((err) => {
