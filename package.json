@@ -6,7 +6,8 @@
   "main": "server/index.js",
   "scripts": {
     "dev": "tsx server/index.ts",
-    "test": "tsx tests/test-reduce.ts"
+    "test": "tsx tests/test-reduce.ts",
+    "db:migrate": "prisma migrate dev"
   },
   "author": "tilak",
   "license": "MIT",

@@ -10,14 +10,43 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Newsletters {
+model NewsletterBatch {
   id        Int      @id @default(autoincrement())
-  blogId    String
-  messageId String
-  email     String
+  siteId    String
+  fromEmail String
+  contents  String
   batchId   String
-  opened    Float
-  sent      Float
-  submitted Float
   created   DateTime @default(now())
+}
+
+model NewslettersMessages {
+  id                 Int                       @id @default(autoincrement())
+  siteId             String
+  messageId          String                    @unique
+  toEmail            String
+  contents           String
+  batchId            String
+  created            DateTime                  @default(now())
+  notificationEvents NewsletterNotifications[]
+}
+
+model NewslettersErrors {
+  id       Int      @id @default(autoincrement())
+  siteId   String
+  toEmail  String
+  contents String
+  batchId  String
+  message  String
+  created  DateTime @default(now())
+}
+
+model NewsletterNotifications {
+  id             Int                 @id @default(autoincrement())
+  type           String
+  notificationId String              @unique
+  newsletter     NewslettersMessages @relation(fields: [messageId], references: [messageId])
+  messageId      String
+  rawEvent       String
+  timestamp      DateTime
+  created        DateTime            @default(now())
 }
