@@ -21,4 +21,5 @@ COPY --chown=node:node . .
 EXPOSE 8080
 
 # Run the application.
+SHELL ["/bin/bash", "-c"]
 CMD npm run prod:db:migrate && npm run start
