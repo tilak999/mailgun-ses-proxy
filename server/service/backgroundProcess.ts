@@ -41,7 +41,7 @@ export async function processEvents() {
                         const result = parseNotificationEvent(msg.Body)
                         await saveNewsletterNotification(result)
                     } catch (e) {
-                        logger(e)
+                        logger(JSON.stringify(e))
                     }
                     const command = new DeleteMessageCommand({
                         QueueUrl: QUEUE_URL.NOTIFICATION,

@@ -1,22 +1,5 @@
-# mailgun-ses-proxy
-Proxy api server to use AWS SES instead of mailgun in ghost
-
-
-## TODO
-
-implement endpoint 
-```
-v3/test.in.co/events?limit=300&event=opened&tags=bulk-email&begin=1726212771.297&end=1726222380.138&ascending=yes
-```
-
-
-### Docker file
-
-```
-
 ARG NODE_VERSION=20
 
-#FROM node:${NODE_VERSION}-bullseye
 FROM node:${NODE_VERSION}-alpine
 
 ENV NODE_ENV=production
@@ -38,5 +21,4 @@ COPY --chown=node:node . .
 EXPOSE 8080
 
 # Run the application.
-CMD ["npm", "run", "start"]
-```
+CMD npm run prod:db:migrate && npm run start

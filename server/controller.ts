@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from "fastify"
 import { addToNewsletterQueue } from "./service/newsletterService"
 import { getEvents } from "./service/eventsService"
-import { EventsQueryParams } from "./type"
+import { EventsQueryParams } from "../types/type"
 import { EmailPayload, sendSystemMail } from "./service/transaction-email-service"
 
 export async function messageController(req: FastifyRequest, reply: FastifyReply) {

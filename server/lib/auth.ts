@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from "fastify"
 import fetch from "node-fetch"
 
-export function withAuth(controllerFunc) {
+export function withAuth(controllerFunc: Function) {
     return async (req: FastifyRequest, reply: FastifyReply) => {
         if (req.headers.authorization && process.env.AUTH_URL) {
             const authString = req.headers.authorization

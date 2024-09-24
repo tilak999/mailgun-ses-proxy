@@ -4,7 +4,7 @@ import { NotificationEvent } from "./utils"
 
 export const prisma = new PrismaClient()
 
-export async function createNewsletterBatchEntry(siteId, batchId, contents, fromEmail) {
+export async function createNewsletterBatchEntry(siteId: string, batchId: string, contents: string, fromEmail: string) {
     return prisma.newsletterBatch.create({
         select: { id: true },
         data: {
@@ -16,7 +16,12 @@ export async function createNewsletterBatchEntry(siteId, batchId, contents, from
     })
 }
 
-export async function createNewsletterEntry(messageId, siteId, batchId, payload: SendEmailRequest) {
+export async function createNewsletterEntry(
+    messageId: string,
+    siteId: string,
+    batchId: string,
+    payload: SendEmailRequest
+) {
     const toEmail = payload.Destination?.ToAddresses?.join("") || ""
     return prisma.newslettersMessages.create({
         data: {
@@ -29,7 +34,12 @@ export async function createNewsletterEntry(messageId, siteId, batchId, payload:
     })
 }
 
-export async function createNewsletterErrorEntry(message, siteId, batchId, payload: SendEmailRequest) {
+export async function createNewsletterErrorEntry(
+    message: string,
+    siteId: string,
+    batchId: string,
+    payload: SendEmailRequest
+) {
     const toEmail = payload.Destination?.ToAddresses?.join("") || ""
     return prisma.newslettersErrors.create({
         data: {

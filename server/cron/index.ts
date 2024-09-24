@@ -1,8 +1,6 @@
 export const JOBS = [
     {
-        cronTime: '*/1 * * * *',
-        onTick: async server => {
-            
-        }
-    }
+        cronTime: "*/1 * * * *",
+        onTick: async (server: any) => {},
+    },
 ]

@@ -29,3 +29,17 @@ export interface EventsQueryParams {
     end: number
     ascending: boolean
 }
+
+export interface MailgunEvents {
+    event: string
+    id: string
+    timestamp: number
+    recipient: string
+    severity?: string
+    reason?: string
+    message: {
+        headers: {
+            "message-id": string
+        }
+    }
+}

@@ -1,0 +1,17 @@
+services:
+    mysql:
+        image: mysql:5.7
+        container_name: mysql
+        environment:
+            MYSQL_DATABASE: "mailgun-ses"
+            MYSQL_ROOT_PASSWORD: "12345678"
+        ports:
+            - "3306:3306"
+            
+    mailgun-ses:
+        image: mailgun-ses:latest
+        container_name: mailgun-ses
+        env_file:
+            - .env
+        ports:
+            - "8080:8080"

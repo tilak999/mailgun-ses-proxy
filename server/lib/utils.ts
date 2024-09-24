@@ -1,11 +1,15 @@
 import { SendEmailRequest } from "@aws-sdk/client-sesv2"
-import { GhostMailgunEmailObject, MailgunRecipientVariables } from "../type"
+import { GhostMailgunEmailObject, MailgunEvents, MailgunRecipientVariables } from "../../types/type"
 import { replaceAll } from "./common"
 import { NewsletterNotifications, NewslettersMessages } from "@prisma/client"
 
 function doSubstitution(inputText: string, substitutions: MailgunRecipientVariables[0]) {
     for (const key of Object.keys(substitutions)) {
-        inputText = replaceAll(inputText, `%recipient.${key}%`, substitutions[key])
+        inputText = replaceAll(
+            inputText,
+            `%recipient.${key}%`,
+            substitutions[key as keyof MailgunRecipientVariables[0]]
+        )
     }
     return inputText
 }
@@ -85,7 +89,11 @@ export interface NotificationEvent {
 export function parseNotificationEvent(inputEvent: string): NotificationEvent {
     const notif = JSON.parse(inputEvent)
     if (notif.Type !== "Notification") throw new Error("Unknown event: " + notif.Type)
-    const event = JSON.parse(notif.Message)
+    const event = JSON.parse(notif.Message) as {
+        eventType: keyof typeof awsToMailgunType
+        mail: { messageId: string }
+        open?: { timestamp: Date }
+    }
     return {
         notificationId: notif.MessageId,
         type: String(awsToMailgunType[event.eventType]).toLocaleLowerCase(),
@@ -96,6 +104,7 @@ export function parseNotificationEvent(inputEvent: string): NotificationEvent {
 }
 
 interface PayloadType extends NewsletterNotifications {
+    messageId: string
     newsletter: NewslettersMessages
 }
 
@@ -113,7 +122,7 @@ export function formatAsMailgunEvent(event: PayloadType[], url: string) {
                     "message-id": event.newsletter.batchId,
                 },
             },
-        }
+        } as MailgunEvents
 
         if (originalSESEvent.eventType == "Bounce") {
             out["severity"] = "permanent"
