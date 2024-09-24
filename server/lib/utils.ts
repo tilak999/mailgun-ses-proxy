@@ -56,7 +56,7 @@ export function preparePayload(input: GhostMailgunEmailObject, siteId: string): 
                 Value: "true",
             },
         ],
-        ConfigurationSetName: process.env.AWS_CONFIGURATION_SET_NAME,
+        ConfigurationSetName: process.env.AWS_NEWSLETTER_CONFIGURATION_SET_NAME,
     }))
     return result
 }

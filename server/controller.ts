@@ -2,6 +2,7 @@ import { FastifyReply, FastifyRequest } from "fastify"
 import { addToNewsletterQueue } from "./service/newsletterService"
 import { getEvents } from "./service/eventsService"
 import { EventsQueryParams } from "./type"
+import { EmailPayload, sendSystemMail } from "./service/transaction-email-service"
 
 export async function messageController(req: FastifyRequest, reply: FastifyReply) {
     try {
@@ -39,6 +40,8 @@ export async function events(req: FastifyRequest, reply: FastifyReply) {
     }
 }
 
-export async function test(req: FastifyRequest, reply: FastifyReply) {
-    console.log("=======>")
+export async function send(req: FastifyRequest, reply: FastifyReply) {
+    const body = req.body as EmailPayload
+    body.from = process.env.SYSTEM_FROM_ADDRESS || ""
+    return sendSystemMail(body)
 }
