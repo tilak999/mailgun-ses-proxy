@@ -19,7 +19,7 @@ jobs:
     
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.repository }}
+          ref: ${{ github.RELEASE_VERSION }}
           
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
