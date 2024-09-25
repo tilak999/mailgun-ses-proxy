@@ -9,8 +9,7 @@ services:
             - "3306:3306"
             
     mailgun-ses:
-        image: mailgun-ses:latest
-        container_name: mailgun-ses
+        image: ghcr.io/tilak999/mailgun-ses-proxy:latest
         env_file:
             - .env
         ports:

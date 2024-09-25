@@ -6,9 +6,8 @@
   "main": "server/index.js",
   "scripts": {
     "dev": "tsx --watch server/index.ts",
-    "start": "tsx server/index.ts",
+    "start": "prisma generate && prisma migrate deploy && tsx server/index.ts",
     "db:generate": "prisma generate",
-    "prod:db:migrate": "prisma generate && prisma migrate deploy",
     "db:migrate": "prisma migrate dev"
   },
   "author": "tilak",
