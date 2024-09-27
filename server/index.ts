@@ -5,7 +5,7 @@ import { events, messageController, send } from "./controller.js"
 import { processEvents, processNewsletterQueue } from "./service/backgroundProcess.js"
 import { withAuth } from "../server/lib/auth.js"
 
-const fastify = Fastify({ logger: true, bodyLimit: 1048576 * 10 })
+const fastify = Fastify({ logger: true, bodyLimit: 1048576 * 10, trustProxy: true })
 fastify.register(multipart, { attachFieldsToBody: true })
 //fastify.register(fastifyCron, { jobs: JOBS })
 
@@ -23,7 +23,8 @@ fastify.ready(() => {
     processEvents()
 })
 
-fastify.listen({ port: parseInt(process.env.PORT || "8080") }).catch((err) => {
+fastify.listen({ port: parseInt(process.env.PORT || "8080"), host: process.env.HOST || "0.0.0.0" })
+    .catch((err) => {
     fastify.log.error(err)
     process.exit(1)
 })
