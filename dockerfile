@@ -20,8 +20,5 @@ COPY --chown=node:node . .
 # Expose the port that the application listens on.
 EXPOSE 8080
 
-HEALTHCHECK --interval=5m --timeout=3s \
-  CMD curl -f http://localhost:8080/healthcheck || exit 1
-
 # Run the application.
 CMD ["npm","run","start"]
