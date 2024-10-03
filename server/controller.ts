@@ -10,7 +10,7 @@ export async function messageController(req: FastifyRequest, reply: FastifyReply
         const messageBody = req.body as any
         const response = await addToNewsletterQueue(messageBody, siteId)
         req.log.info(`Message queued to newsletter SQS: ${response.MessageId}`)
-        reply.send({ id: messageBody["v:email-id"]["value"] })
+        reply.send({ id: response.MessageId })
     } catch (e) {
         req.log.error(`Error when queuing message: ${e}`)
         reply.code(400).send({ message: e })

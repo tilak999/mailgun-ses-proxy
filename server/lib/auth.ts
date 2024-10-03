@@ -7,8 +7,8 @@ export function withAuth(controllerFunc: Function) {
             const authString = req.headers.authorization
             const { siteId } = req.params as { siteId: string }
             try {
-                await validateAuth(authString, siteId)
-                return controllerFunc(req, reply)
+                const auth = await validateAuth(authString, siteId)
+                return controllerFunc(req, reply, auth)
             } catch {
                 reply.code(401).send({ error: "401 Unauthorized" })
             }
@@ -32,4 +32,5 @@ async function validateAuth(credentails: string, siteId: string) {
         body: JSON.stringify({ apiKey, siteId }),
     })
     if (!rawResponse.ok) throw new Error("Auth failed")
+    return rawResponse.json()
 }

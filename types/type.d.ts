@@ -43,3 +43,11 @@ export interface MailgunEvents {
         }
     }
 }
+
+export interface AuthPayload {
+    limit: {
+        newsletter: number
+        startDate: Date
+        endDate: Date
+    }
+}
