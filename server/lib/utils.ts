@@ -120,6 +120,7 @@ export function formatAsMailgunEvent(event: PayloadType[], url: string) {
             message: {
                 headers: {
                     "message-id": event.newsletter.batchId,
+                    "to": event.newsletter.toEmail
                 },
             },
         } as MailgunEvents

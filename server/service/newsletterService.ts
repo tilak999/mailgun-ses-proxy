@@ -7,11 +7,10 @@ import { validateSiteId } from "./validate"
 import { createNewsletterBatchEntry, createNewsletterEntry, createNewsletterErrorEntry } from "../lib/db"
 import { QUEUE_URL, sesClient, sqsClient } from "../lib/awsHelper"
 
-export async function addToNewsletterQueue(message: any, siteId: string, auth: any) {
+export async function addNewsletterToQueue(message: any, siteId: string, auth: any) {
     if (!message) {
         throw new Error("Message body is empty or invalid.")
     }
-
     const body = safeStringify(message)
     const params = {
         QueueUrl: QUEUE_URL.NEWSLETTER,
@@ -30,7 +29,7 @@ export async function addToNewsletterQueue(message: any, siteId: string, auth: a
     const command = new SendMessageCommand(params)
     const response = await sqsClient.send(command)
     await createNewsletterBatchEntry(siteId, message["v:email-id"]["value"], body, message.from.value)
-    return response
+    return { batchId: message["v:email-id"]["value"], messageId: response.MessageId }
 }
 
 async function sendMail(siteId: string, messageBody: string) {

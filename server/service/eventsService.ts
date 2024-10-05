@@ -40,11 +40,14 @@ export async function getEvents(params: EventsProps) {
         where: {
             type: { in: type },
             newsletter: { siteId: params.siteId },
-            timestamp: range,
+            created: range,
         },
     })
 
     const next = upsertStartParam(params.url, skip + take)
     const output = await formatAsMailgunEvent(result, next)
+
+    console.log(JSON.stringify(output))
+
     return output
 }

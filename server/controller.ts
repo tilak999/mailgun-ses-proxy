@@ -1,5 +1,5 @@
 import { FastifyReply, FastifyRequest } from "fastify"
-import { addToNewsletterQueue } from "./service/newsletterService"
+import { addNewsletterToQueue } from "./service/newsletterService"
 import { getEvents } from "./service/eventsService"
 import { EventsQueryParams } from "../types/type"
 import { EmailPayload, sendSystemMail } from "./service/transaction-email-service"
@@ -8,9 +8,9 @@ export async function messageController(req: FastifyRequest, reply: FastifyReply
     try {
         const { siteId } = req.params as { siteId: string }
         const messageBody = req.body as any
-        const response = await addToNewsletterQueue(messageBody, siteId)
-        req.log.info(`Message queued to newsletter SQS: ${response.MessageId}`)
-        reply.send({ id: response.MessageId })
+        const { messageId, batchId } = await addNewsletterToQueue(messageBody, siteId, null)
+        req.log.info(`Message queued to newsletter SQS: ${messageId}`)
+        reply.send({ id: batchId })
     } catch (e) {
         req.log.error(`Error when queuing message: ${e}`)
         reply.code(400).send({ message: e })

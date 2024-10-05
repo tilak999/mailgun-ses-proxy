@@ -13,8 +13,8 @@ datasource db {
 model NewsletterBatch {
   id        Int      @id @default(autoincrement())
   siteId    String
-  fromEmail String
-  contents  String
+  fromEmail String   @db.Text
+  contents  String   @db.Text
   batchId   String
   created   DateTime @default(now())
 }
@@ -23,8 +23,8 @@ model NewslettersMessages {
   id                 Int                       @id @default(autoincrement())
   siteId             String
   messageId          String                    @unique
-  toEmail            String
-  contents           String
+  toEmail            String                    @db.Text
+  contents           String                    @db.Text
   batchId            String
   created            DateTime                  @default(now())
   notificationEvents NewsletterNotifications[]
@@ -33,10 +33,10 @@ model NewslettersMessages {
 model NewslettersErrors {
   id       Int      @id @default(autoincrement())
   siteId   String
-  toEmail  String
-  contents String
+  toEmail  String   @db.Text
+  contents String   @db.Text
   batchId  String
-  message  String
+  message  String   @db.Text
   created  DateTime @default(now())
 }
 
@@ -46,7 +46,7 @@ model NewsletterNotifications {
   notificationId String              @unique
   newsletter     NewslettersMessages @relation(fields: [messageId], references: [messageId])
   messageId      String
-  rawEvent       String
+  rawEvent       String              @db.Text
   timestamp      DateTime
   created        DateTime            @default(now())
 }
