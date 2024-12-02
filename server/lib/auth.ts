@@ -13,7 +13,7 @@ export function withAuth(controllerFunc: Function) {
                 reply.code(401).send({ error: "401 Unauthorized" })
             }
         } else {
-            throw new Error("Error: AUTH_URL is not set")
+            throw new Error("Missing: AUTH_URL or authorization header")
         }
     }
 }
