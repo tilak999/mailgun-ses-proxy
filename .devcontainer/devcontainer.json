@@ -1,0 +1,23 @@
+{
+    "name": "mailgun-to-ses-proxy",
+    "build": {
+      "dockerfile": "Dockerfile"
+    },
+    "features": {
+      "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+    },
+    "customizations": {
+      "vscode": {
+        "extensions": [
+          "mads-hartmann.bash-ide-vscode",
+          "esbenp.prettier-vscode",
+          "dbaeumer.vscode-eslint",
+          "bradlc.vscode-tailwindcss",
+          "streetsidesoftware.code-spell-checker",
+          "cweijan.vscode-database-client2",
+          "wix.vscode-import-cost",
+          "Prisma.prisma"
+        ]
+      }
+    }
+  }
