@@ -1,0 +1,27 @@
+services:
+
+    mysql:
+        image: mysql:8.0
+        container_name: mysql
+        command: mysqld --default-authentication-plugin=mysql_native_password
+        environment:
+            MYSQL_ROOT_PASSWORD: "random_password"
+        ports:
+            - "3306:3306"
+
+    ghost:
+        image: ghost:latest
+        restart: always
+        ports:
+            - 2368:2368
+        environment:
+            database__client: mysql
+            database__connection__host: 10.0.0.4
+            database__connection__user: root
+            database__connection__password: random_password
+            database__connection__database: ghost
+            bulkEmail__mailgun__apiKey: 02cbe748-0c67-40c4-ad31-3ae962eb72e7
+            bulkEmail__mailgun__baseUrl: http://10.0.0.4:3000/v3
+            bulkEmail__mailgun__domain: test.ontypetale.com
+            bulkEmail__mailgun__from: noreply@test.ontypetale.com
+    
