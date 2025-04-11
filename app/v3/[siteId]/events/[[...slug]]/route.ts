@@ -1,5 +1,8 @@
+import logger from "@/lib/logger"
 import { getEmailEvents } from "@/service/email-event-service"
 import { NextRequest } from "next/server"
+
+const log = logger.child({ service: "app:v3:events" })
 
 interface QueryParams {
     start: number
@@ -33,10 +36,10 @@ function validateQueryParams(searchParams: URLSearchParams): QueryParams {
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ siteId: string, slug: string[] | undefined }> }) {
     const { siteId, slug } = await params
-    console.log("slug", slug)
+    if (slug) log.info({ slug }, "incoming request with slug")
     try {
         const queryParams = validateQueryParams(req.nextUrl.searchParams)
-        const event = {
+        const queryPayload = {
             siteId: siteId,
             type: queryParams.event,
             begin: queryParams.begin,
@@ -46,12 +49,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ site
             start: queryParams.start,
             url: req.url,
         }
-        console.log("Fetching events", event)
-        const response = await getEmailEvents(event)
-        console.log("Events fetched successfully", response)
+        log.info({ queryPayload }, "Fetching events with params")
+        const response = await getEmailEvents(queryPayload)
+        log.debug({ response }, "Events fetched successfully")
         return Response.json(response, { status: 200 })
     } catch (e) {
-        console.error(`Error when queuing message: ${e}`)
+        log.error('Error when queuing message', e)
         return Response.json({ message: e }, { status: 400 })
     }
 }

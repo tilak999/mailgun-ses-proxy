@@ -33,7 +33,3 @@ export function safeStringify(obj: any, indent = 2) {
     )
     return retVal
 }
-
-export function logger(msg: string) {
-    console.log(safeStringify({ type: "error", message: msg }))
-}

@@ -3,7 +3,9 @@ import { parseNotificationEvent } from "../lib/utils"
 import { saveNewsletterNotification } from "../lib/db"
 import { validateAndSend } from "./newsletter-service"
 import { QUEUE_URL, sqsClient } from "../lib/awsHelper"
-import { logger } from "../lib/common"
+import logger from "../lib/logger"
+
+const log = logger.child({ service: "service:backgroundProcess" })
 
 export async function processNewsletterQueue() {
     const input = {
@@ -31,7 +33,7 @@ async function processEmailEvents(response: ReceiveMessageCommandOutput) {
                 const result = parseNotificationEvent(msg.MessageId, msg.Body)
                 await saveNewsletterNotification(result)
             } catch (e) {
-                logger(JSON.stringify(e))
+                log.error(e)
             }
             const command = new DeleteMessageCommand({
                 QueueUrl: QUEUE_URL.NOTIFICATION,

@@ -1,3 +1,4 @@
+import { log } from "console"
 import { prisma } from "../lib/db"
 import { formatAsMailgunEvent } from "../lib/utils"
 
@@ -43,11 +44,7 @@ export async function getEmailEvents(params: EventsProps) {
             created: range,
         },
     })
-
     const next = upsertStartParam(params.url, skip + take)
     const output = await formatAsMailgunEvent(result, next)
-
-    console.log(JSON.stringify(output))
-
     return output
 }
