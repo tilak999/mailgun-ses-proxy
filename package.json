@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "tsx --watch server.ts",
-    "build": "next build",
-    "start": "NODE_ENV=production node server.js",
+    "dev": "nodemon",
+    "build": "next build && tsc --project tsconfig.server.json",
+    "start": "cross-env NODE_ENV=production node dist/server.js",
     "lint": "next lint",
     "db:migrate:dev": "prisma migrate dev",
     "db:migrate": "prisma migrate deploy",
@@ -16,17 +16,20 @@
     "@aws-sdk/client-sqs": "^3.777.0",
     "@prisma/client": "^6.5.0",
     "next": "15.2.4",
+    "pino": "^9.6.0",
+    "pino-pretty": "^13.0.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "tsx": "^4.19.3"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "nodemon": "^3.1.9",
     "prisma": "^6.5.0",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }

@@ -53,6 +53,6 @@ export async function processEmailEventsQueue() {
     const command = new ReceiveMessageCommand(input)
     while (true) {
         let response = await sqsClient.send(command)
-        await processEmailEvents(response)
+        if (response.Messages) await processEmailEvents(response)
     }
 }
