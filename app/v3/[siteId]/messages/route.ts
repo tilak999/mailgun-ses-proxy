@@ -1,5 +1,5 @@
 import { formDataToObject } from "@/lib/utilsx"
-import { addNewsletterToQueue } from "@/service/newsletterService"
+import { addNewsletterToQueue } from "@/service/newsletter-service"
 
 export async function POST(req: Request, { params }: { params: Promise<{ siteId: string }> }) {
     const { siteId } = await params

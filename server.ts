@@ -1,7 +1,7 @@
 import { createServer, IncomingMessage, ServerResponse } from "http"
 import { parse } from "url"
 import next from "next"
-import { processEvents, processNewsletterQueue } from "./service/backgroundProcess"
+import { processEmailEventsQueue, processNewsletterQueue } from "./service/backgroundProcess"
 
 const port = parseInt(process.env.PORT || "3000", 10)
 const dev = process.env.NODE_ENV !== "production"
@@ -19,5 +19,5 @@ app.prepare().then(() => {
     console.log(`> Server listening at http://localhost:${port} as ${type}`)
     // process the SES queues for emails and events
     processNewsletterQueue()
-    processEvents()
+    processEmailEventsQueue()
 })

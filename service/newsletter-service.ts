@@ -1,5 +1,5 @@
 import { preparePayload } from "../lib/utils"
-import { formatBody, logger, safeStringify } from "../lib/common"
+import { logger, safeStringify } from "../lib/common"
 import { SendEmailCommand } from "@aws-sdk/client-sesv2"
 import { DeleteMessageCommand, Message, SendMessageCommand } from "@aws-sdk/client-sqs"
 import { validateSiteId } from "./validate"

@@ -1,4 +1,4 @@
-import { FastifyReply, FastifyRequest } from "fastify"
+/*
 import fetch from "node-fetch"
 
 export function withAuth(controllerFunc: Function) {
@@ -34,3 +34,4 @@ async function validateAuth(credentails: string, siteId: string) {
     if (!rawResponse.ok) throw new Error("Auth failed")
     return rawResponse.json()
 }
+*/

@@ -1,4 +1,4 @@
-import { getEvents } from "@/service/eventsService"
+import { getEmailEvents } from "@/service/email-event-service"
 import { NextRequest } from "next/server"
 
 interface QueryParams {
@@ -31,8 +31,9 @@ function validateQueryParams(searchParams: URLSearchParams): QueryParams {
     return queryParams
 }
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ siteId: string }> }) {
-    const { siteId } = await params
+export async function GET(req: NextRequest, { params }: { params: Promise<{ siteId: string, slug: string[] | undefined }> }) {
+    const { siteId, slug } = await params
+    console.log("slug", slug)
     try {
         const queryParams = validateQueryParams(req.nextUrl.searchParams)
         const event = {
@@ -46,7 +47,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ site
             url: req.url,
         }
         console.log("Fetching events", event)
-        const response = await getEvents(event)
+        const response = await getEmailEvents(event)
         console.log("Events fetched successfully", response)
         return Response.json(response, { status: 200 })
     } catch (e) {

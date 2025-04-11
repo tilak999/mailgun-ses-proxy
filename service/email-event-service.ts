@@ -21,7 +21,7 @@ function upsertStartParam(url: string, startVal: number) {
     return urlObject.toString()
 }
 
-export async function getEvents(params: EventsProps) {
+export async function getEmailEvents(params: EventsProps) {
     let skip = params.start || 0
     let take = params.limit || 300
 
