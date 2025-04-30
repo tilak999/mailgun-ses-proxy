@@ -38,3 +38,31 @@ export interface AuthPayload {
         endDate: Date
     }
 }
+
+export interface EventsProps {
+    siteId: string
+    type: string
+    begin: number
+    end: number
+    order: "asc" | "desc"
+    start: number
+    limit: number
+    url: string
+}
+
+export interface QueryParams {
+    start: number
+    limit: number
+    event: string
+    begin: number
+    end: number
+    order: "asc" | "desc"
+}
+
+export interface EmailPayload {
+    from: string
+    replyTo: string
+    to: string[]
+    subject: string
+    html: string
+}

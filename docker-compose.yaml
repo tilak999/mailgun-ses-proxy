@@ -1,5 +1,4 @@
 services:
-
     mysql:
         image: mysql:8.0
         container_name: mysql
@@ -22,6 +21,6 @@ services:
             database__connection__database: ghost
             bulkEmail__mailgun__apiKey: 02cbe748-0c67-40c4-ad31-3ae962eb72e7
             bulkEmail__mailgun__baseUrl: http://10.0.0.4:3000/v3
-            bulkEmail__mailgun__domain: test.ontypetale.com
-            bulkEmail__mailgun__from: noreply@test.ontypetale.com
-    
+            bulkEmail__mailgun__domain: local.ontypetale.com
+            hostSettings__managedEmail__sendingDomain: test.ontypetale.com
+            mail__from: noreply@test.ontypetale.com

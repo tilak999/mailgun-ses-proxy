@@ -8,9 +8,11 @@ import logger from "../lib/logger"
 const log = logger.child({ service: "service:backgroundProcess" })
 
 export async function processNewsletterQueue() {
+    log.info("[background] Processing newsletter queue")
     const input = {
         MessageAttributeNames: ["All"],
-        MessageSystemAttributeNames: [MessageSystemAttributeName.SentTimestamp],
+        MessageSystemAttributeNames: [MessageSystemAttributeName.SentTimestamp,
+        MessageSystemAttributeName.ApproximateReceiveCount],
         QueueUrl: QUEUE_URL.NEWSLETTER,
         VisibilityTimeout: 30,
         WaitTimeSeconds: 20,
@@ -45,6 +47,7 @@ async function processEmailEvents(response: ReceiveMessageCommandOutput) {
 }
 
 export async function processEmailEventsQueue() {
+    log.info("[background] Processing analytics queue")
     const input = {
         MessageAttributeNames: ["All"],
         MessageSystemAttributeNames: [MessageSystemAttributeName.SentTimestamp],

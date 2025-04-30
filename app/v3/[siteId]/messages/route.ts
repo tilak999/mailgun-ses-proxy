@@ -1,23 +1,25 @@
 import logger from "@/lib/logger"
 import { formDataToObject } from "@/lib/utilsx"
 import { addNewsletterToQueue } from "@/service/newsletter-service"
+import path from "path"
 
-const log = logger.child({ service: "app:v3:messages" })
+const log = logger.child({ path: "app/v3/messages" })
 
-export async function POST(req: Request, { params }: { params: Promise<{ siteId: string }> }) {
+type pathParam = { params: Promise<{ siteId: string }> }
+
+export async function POST(req: Request, { params }: pathParam) {
     const { siteId } = await params
-    if (!siteId) {
-        return Response.json({ message: "Site ID is required" }, { status: 400 })
-    }
+    if (!siteId) return Response.json({ message: "siteId is required" }, { status: 400 })
 
     try {
-        const formData = await req.formData()
-        const data = formDataToObject(formData)
+        const data = formDataToObject(await req.formData())
+        // data.html, data.text
         const { messageId, batchId } = await addNewsletterToQueue(data, siteId, null)
-        log.info(`Message queued to newsletter SQS`, messageId)
+        log.info("message queued to newsletter SQS", { messageId })
         return Response.json({ id: batchId })
     } catch (e) {
-        log.error(`Error when queuing message`, e)
-        return Response.json({ message: e }, { status: 400 })
+        log.error(e, "Error when queuing message to newsletter SQS")
+        const errorMessage = e instanceof Error ? e.message : "An error occurred";
+        return Response.json({ message: errorMessage }, { status: 400 })
     }
 }

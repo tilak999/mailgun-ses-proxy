@@ -1,6 +1,6 @@
 import { SendEmailRequest } from "@aws-sdk/client-sesv2"
 import { replaceAll } from "./common"
-import { NewsletterNotifications, NewslettersMessages } from "@prisma/client"
+import { NewsletterNotifications, NewsletterMessages, NewsletterBatch, Prisma } from "@prisma/client"
 import { MailgunEvents, MailgunRecipientVariables } from "@/types/default"
 
 function doSubstitution(inputText: string, substitutions: MailgunRecipientVariables[0]) {
@@ -100,13 +100,12 @@ export function parseNotificationEvent(messageId: string, inputEvent: string): N
     }
 }
 
-interface PayloadType extends NewsletterNotifications {
-    messageId: string
-    newsletter: NewslettersMessages
-}
+type MailgunEventPayload = Prisma.NewsletterNotificationsGetPayload<{
+    include: { newsletter: { include: { newsletterBatch: true } } }
+}>
 
-export function formatAsMailgunEvent(event: PayloadType[], url: string) {
-    const format = (event: PayloadType) => {
+export function formatAsMailgunEvent(event: MailgunEventPayload[], url: string) {
+    const format = (event: MailgunEventPayload) => {
         const eventTimestamp = (event.timestamp || event.created).getTime()
         const originalSESEvent = JSON.parse(event.rawEvent)
         const out = {
@@ -116,7 +115,7 @@ export function formatAsMailgunEvent(event: PayloadType[], url: string) {
             recipient: event.newsletter.toEmail,
             message: {
                 headers: {
-                    "message-id": event.newsletter.batchId,
+                    "message-id": event.newsletter.newsletterBatch.batchId,
                     "to": event.newsletter.toEmail
                 },
             },

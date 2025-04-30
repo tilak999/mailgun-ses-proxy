@@ -1,13 +1,6 @@
 import { SendEmailCommand } from "@aws-sdk/client-sesv2"
 import { sesClient } from "../lib/awsHelper"
-
-export interface EmailPayload {
-    from: string
-    replyTo: string
-    to: string[]
-    subject: string
-    html: string
-}
+import { EmailPayload } from "@/types/default"
 
 export async function sendSystemMail(email: EmailPayload) {
     const input = {
@@ -35,3 +28,4 @@ export async function sendSystemMail(email: EmailPayload) {
     const resp = await sesClient.send(cmd)
     return { id: resp.MessageId }
 }
+

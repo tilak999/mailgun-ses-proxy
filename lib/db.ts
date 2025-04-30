@@ -1,10 +1,15 @@
 import { SendEmailRequest } from "@aws-sdk/client-sesv2"
 import { PrismaClient } from "@prisma/client"
 import { NotificationEvent } from "./utils"
+import { MailgunMessage } from "@/types/mailgun"
+import { safeStringify } from "./common"
 
 export const prisma = new PrismaClient()
 
-export async function createNewsletterBatchEntry(siteId: string, batchId: string, contents: string, fromEmail: string) {
+export async function createNewsletterBatchEntry(siteId: string, message: MailgunMessage) {
+    const batchId = message["v:email-id"]
+    const contents = safeStringify(message)
+    const fromEmail = message.from
     return prisma.newsletterBatch.create({
         select: { id: true },
         data: {
@@ -16,18 +21,12 @@ export async function createNewsletterBatchEntry(siteId: string, batchId: string
     })
 }
 
-export async function createNewsletterEntry(
-    messageId: string,
-    siteId: string,
-    batchId: string,
-    payload: SendEmailRequest
-) {
+export async function createNewsletterEntry(messageId: string, batchId: string, payload: SendEmailRequest) {
     const toEmail = payload.Destination?.ToAddresses?.join("") || ""
-    return prisma.newslettersMessages.create({
+    return prisma.newsletterMessages.create({
         data: {
-            siteId,
-            batchId,
-            contents: JSON.stringify(payload),
+            newsletterBatchId: batchId,
+            formatedContents: safeStringify(payload),
             toEmail,
             messageId,
         },
@@ -35,19 +34,19 @@ export async function createNewsletterEntry(
 }
 
 export async function createNewsletterErrorEntry(
-    message: string,
-    siteId: string,
+    messageId: string,
+    errorMessage: string,
     batchId: string,
     payload: SendEmailRequest
 ) {
     const toEmail = payload.Destination?.ToAddresses?.join("") || ""
-    return prisma.newslettersErrors.create({
+    return prisma.newsletterErrors.create({
         data: {
-            siteId,
-            batchId,
-            contents: JSON.stringify(payload),
-            toEmail,
-            message,
+            error: errorMessage,
+            newsletterBatchId: batchId,
+            messageId: messageId,
+            formatedContents: safeStringify(payload),
+            toEmail
         },
     })
 }
@@ -62,4 +61,12 @@ export function saveNewsletterNotification(event: NotificationEvent) {
             timestamp: event.timestamp,
         },
     })
+}
+
+export async function getNewsletterContent(id: string) {
+    const result = await prisma.newsletterBatch.findUnique({
+        where: { id },
+        select: { contents: true }
+    })
+    return result && result.contents ? JSON.parse(result.contents) : null
 }

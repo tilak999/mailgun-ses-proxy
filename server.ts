@@ -2,9 +2,9 @@ import { createServer, IncomingMessage, ServerResponse } from "http"
 import { parse } from "url"
 import next from "next"
 import logger from "./lib/logger"
-import { processEmailEventsQueue, processNewsletterQueue } from "./service/backgroundProcess"
+import { processEmailEventsQueue, processNewsletterQueue } from "./service/background-process"
 
-const port = parseInt(process.env.PORT || "3000", 10)
+const port = parseInt(process.env.PORT || "3000")
 const dev = process.env.NODE_ENV !== "production"
 const app = next({ dev })
 const handle = app.getRequestHandler()

@@ -1,17 +1,6 @@
-import { log } from "console"
+import { EventsProps, QueryParams } from "@/types/default"
 import { prisma } from "../lib/db"
 import { formatAsMailgunEvent } from "../lib/utils"
-
-interface EventsProps {
-    siteId: string
-    type: string
-    begin: number
-    end: number
-    order: "asc" | "desc"
-    start: number
-    limit: number
-    url: string
-}
 
 function upsertStartParam(url: string, startVal: number) {
     url = url.slice(0, url.lastIndexOf("?"))
@@ -37,14 +26,50 @@ export async function getEmailEvents(params: EventsProps) {
         skip: skip,
         take: take,
         orderBy: { id: params.order },
-        include: { newsletter: true },
+        include: { newsletter: { include: { newsletterBatch: true } } },
         where: {
             type: { in: type },
-            newsletter: { siteId: params.siteId },
+            newsletter: { newsletterBatch: { siteId: params.siteId } },
             created: range,
         },
     })
+
     const next = upsertStartParam(params.url, skip + take)
     const output = await formatAsMailgunEvent(result, next)
     return output
+}
+
+export function validateQueryParams(searchParams: URLSearchParams): QueryParams {
+    const exception = (missingParam: string) => {
+        throw `Missing query param (${missingParam})`
+    }
+
+    const event = searchParams.get("event") || exception("event")
+    const begin = searchParams.get("begin") || exception("begin")
+    const end = searchParams.get("end") || exception("end")
+
+    const queryParams = {
+        start: parseInt(searchParams.get("start") || "0"),
+        limit: parseInt(searchParams.get("limit") || "300"),
+        event: event,
+        begin: parseInt(begin),
+        end: parseInt(end),
+        order: searchParams.get("ascending") ? "asc" : "desc",
+    } as QueryParams
+
+    return queryParams
+}
+
+export async function fetchAnalyticsEvents(queryParams: QueryParams, siteId: string, url: string) {
+    const response = await getEmailEvents({
+        siteId,
+        type: queryParams.event,
+        begin: queryParams.begin,
+        end: queryParams.end,
+        order: queryParams.order,
+        limit: queryParams.limit,
+        start: queryParams.start,
+        url,
+    })
+    return response
 }

@@ -11,42 +11,45 @@ datasource db {
 }
 
 model NewsletterBatch {
-  id        Int      @id @default(autoincrement())
-  siteId    String
-  fromEmail String   @db.Text
-  contents  String   @db.Text
-  batchId   String
-  created   DateTime @default(now())
+  id                  String               @id @default(uuid())
+  siteId              String
+  fromEmail           String               @db.Text
+  contents            String               @db.LongText
+  batchId             String
+  created             DateTime             @default(now())
+  NewslettersMessages NewsletterMessages[]
+  NewslettersErrors   NewsletterErrors[]
 }
 
-model NewslettersMessages {
-  id                 Int                       @id @default(autoincrement())
-  siteId             String
+model NewsletterMessages {
+  id                 String                    @id @default(uuid())
   messageId          String                    @unique
   toEmail            String                    @db.Text
-  contents           String                    @db.Text
-  batchId            String
+  newsletterBatchId  String
   created            DateTime                  @default(now())
+  formatedContents   String                    @db.LongText
   notificationEvents NewsletterNotifications[]
+  newsletterBatch    NewsletterBatch           @relation(fields: [newsletterBatchId], references: [id])
 }
 
-model NewslettersErrors {
-  id       Int      @id @default(autoincrement())
-  siteId   String
-  toEmail  String   @db.Text
-  contents String   @db.Text
-  batchId  String
-  message  String   @db.Text
-  created  DateTime @default(now())
+model NewsletterErrors {
+  id                String          @id @default(uuid())
+  toEmail           String          @db.Text
+  error             String          @db.Text
+  created           DateTime        @default(now())
+  newsletterBatchId String
+  messageId         String          @unique
+  formatedContents  String          @db.LongText
+  newsletterBatch   NewsletterBatch @relation(fields: [newsletterBatchId], references: [id])
 }
 
 model NewsletterNotifications {
-  id             Int                 @id @default(autoincrement())
+  id             String             @id @default(uuid())
   type           String
-  notificationId String              @unique
-  newsletter     NewslettersMessages @relation(fields: [messageId], references: [messageId])
+  notificationId String             @unique
   messageId      String
-  rawEvent       String              @db.Text
+  rawEvent       String             @db.Text
   timestamp      DateTime
-  created        DateTime            @default(now())
+  created        DateTime           @default(now())
+  newsletter     NewsletterMessages @relation(fields: [messageId], references: [messageId])
 }

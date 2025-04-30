@@ -4,4 +4,4 @@ const logger = pino({
     level: process.env.NODE_ENV != "production" ? 'debug' : 'info'
 });
 
-export default logger;
+export default logger.child({ app: "mailgun-ses-proxy" });
