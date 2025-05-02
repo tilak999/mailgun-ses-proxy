@@ -53,3 +53,21 @@ model NewsletterNotifications {
   created        DateTime           @default(now())
   newsletter     NewsletterMessages @relation(fields: [messageId], references: [messageId])
 }
+
+enum SystemMailStatus {
+  pending
+  sent
+  error
+}
+
+model SystemMails {
+  id        String           @id @default(uuid())
+  messageId String           @default("")
+  fromEmail String           @db.Text
+  toEmail   String           @db.Text
+  subject   String           @db.Text
+  contents  String           @db.LongText
+  created   DateTime         @default(now())
+  updated   DateTime         @updatedAt
+  status    SystemMailStatus @default(pending)
+}

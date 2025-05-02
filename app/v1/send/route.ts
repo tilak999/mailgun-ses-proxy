@@ -11,6 +11,11 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const payload = body as unknown as EmailPayload
     payload.from = process.env.SYSTEM_FROM_ADDRESS || ""
-    const result = await sendSystemMail(payload)
-    return Response.json(result)
+
+    try {
+        const result = await sendSystemMail(payload)
+        return Response.json(result)
+    } catch (error) {
+        return Response.json({ error: "Failed to send email" }, { status: 500 })
+    }
 }
