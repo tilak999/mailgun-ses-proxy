@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { authentication } from "./service/authenticate";
 
 /**
  * Middleware to check for a valid API key in the request headers
@@ -11,21 +12,19 @@ const whitelist = [
     "/healthcheck",
 ]
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
     if (whitelist.some((path) => request.nextUrl.pathname.startsWith(path))) {
         return NextResponse.next();
     }
     const token = request.headers.get("authorization")
     if (token) {
-        const raw = Buffer.from(token.split(" ")[1], "base64").toString("utf-8")
-        if (raw !== "api:" + process.env.API_KEY) {
-            console.error(`Invalid API key: ${token}`)
-            return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
+        const result = await authentication(token)
+        if (result) {
+            return NextResponse.next();
         }
-        return NextResponse.next();
     }
     console.error("API key not found")
-    return NextResponse.json({ error: "API key missing" }, { status: 401 });
+    return Response.json({ error: 'authentication failed' }, { status: 401 })
 }
 
 // Match all routes

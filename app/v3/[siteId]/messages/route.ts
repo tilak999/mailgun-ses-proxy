@@ -1,7 +1,6 @@
 import logger from "@/lib/logger"
 import { formDataToObject } from "@/lib/utilsx"
 import { addNewsletterToQueue } from "@/service/newsletter-service"
-import path from "path"
 
 const log = logger.child({ path: "app/v3/messages" })
 
