@@ -1,0 +1,86 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model NewsletterBatch {
+  id                  String               @id @default(uuid())
+  siteId              String
+  fromEmail           String               @db.Text
+  contents            String               @db.LongText
+  batchId             String
+  created             DateTime             @default(now())
+  NewslettersMessages NewsletterMessages[]
+  NewslettersErrors   NewsletterErrors[]
+}
+
+model NewsletterMessages {
+  id                 String                    @id @default(uuid())
+  messageId          String                    @unique
+  toEmail            String                    @db.Text
+  newsletterBatchId  String
+  created            DateTime                  @default(now())
+  formatedContents   String                    @db.LongText
+  notificationEvents NewsletterNotifications[]
+  newsletterBatch    NewsletterBatch           @relation(fields: [newsletterBatchId], references: [id])
+}
+
+model NewsletterErrors {
+  id                String          @id @default(uuid())
+  toEmail           String          @db.Text
+  error             String          @db.Text
+  created           DateTime        @default(now())
+  newsletterBatchId String
+  messageId         String          @unique
+  formatedContents  String          @db.LongText
+  newsletterBatch   NewsletterBatch @relation(fields: [newsletterBatchId], references: [id])
+}
+
+model NewsletterNotifications {
+  id             String             @id @default(uuid())
+  type           String
+  notificationId String             @unique
+  messageId      String
+  rawEvent       String             @db.Text
+  timestamp      DateTime
+  created        DateTime           @default(now())
+  newsletter     NewsletterMessages @relation(fields: [messageId], references: [messageId])
+}
+
+model SystemMailNotifications {
+  id             String      @id @default(uuid())
+  type           String
+  notificationId String      @unique
+  messageId      String
+  rawEvent       String      @db.Text
+  timestamp      DateTime
+  created        DateTime    @default(now())
+  systemMail     SystemMails @relation(fields: [messageId], references: [messageId])
+}
+
+enum SystemMailStatus {
+  pending
+  sent
+  error
+}
+
+model SystemMails {
+  id                      String                    @id @default(uuid())
+  messageId               String                    @unique
+  fromEmail               String                    @db.Text
+  toEmail                 String                    @db.Text
+  subject                 String                    @db.Text
+  contents                String                    @db.LongText
+  created                 DateTime                  @default(now())
+  updated                 DateTime                  @updatedAt
+  status                  SystemMailStatus          @default(pending)
+  SystemMailNotifications SystemMailNotifications[]
+}

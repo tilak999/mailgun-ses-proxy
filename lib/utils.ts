@@ -1,6 +1,6 @@
 import { SendEmailRequest } from "@aws-sdk/client-sesv2"
 import { replaceAll } from "./common"
-import { NewsletterNotifications, NewsletterMessages, NewsletterBatch, Prisma } from "@prisma/client"
+import { Prisma } from "@prisma/client"
 import { MailgunEvents, MailgunRecipientVariables } from "@/types/default"
 
 function doSubstitution(inputText: string, substitutions: MailgunRecipientVariables[0]) {

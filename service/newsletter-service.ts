@@ -3,7 +3,7 @@ import { safeStringify } from "../lib/common"
 import { SendEmailCommand } from "@aws-sdk/client-sesv2"
 import { DeleteMessageCommand, Message, SendMessageCommand } from "@aws-sdk/client-sqs"
 import { createNewsletterBatchEntry, createNewsletterEntry, createNewsletterErrorEntry, getNewsletterContent } from "../lib/db"
-import { QUEUE_URL, sesClient, sqsClient } from "../lib/awsHelper"
+import { QUEUE_URL, sesTransactionalClient, sqsTransactionalClient } from "../lib/awsHelper"
 import logger from "../lib/logger"
 
 const log = logger.child({ service: "service:newsletter-service" })
@@ -28,28 +28,27 @@ export async function addNewsletterToQueue(message: any, siteId: string, auth: a
         },
     }
     const command = new SendMessageCommand(params)
-    const response = await sqsClient.send(command)
+    const response = await sqsTransactionalClient.send(command)
     return { batchId: message["v:email-id"], messageId: response.MessageId }
 }
 
 async function sendMail(siteId: string, dbId: string) {
     const contents = await getNewsletterContent(dbId)
-    const payloads = preparePayload(contents, siteId)
+    const sendEmailRequests = preparePayload(contents, siteId)
     const batchId = contents["v:email-id"]
-    const promises = payloads.map(async (payload) => {
+    for (const requests of sendEmailRequests) {
         try {
-            const cmd = new SendEmailCommand(payload)
-            const resp = await sesClient.send(cmd)
+            const cmd = new SendEmailCommand(requests)
+            const resp = await sesTransactionalClient.send(cmd)
             const messageId = resp.MessageId as string
-            await createNewsletterEntry(messageId, dbId, payload)
+            await createNewsletterEntry(messageId, dbId, requests)
             log.info({ messageId, siteId }, "email sent")
         } catch (e) {
             log.error(e, "error occurred at sendMail")
-            await createNewsletterErrorEntry(String(e), siteId, batchId, payload)
+            await createNewsletterErrorEntry(String(e), siteId, batchId, requests)
             return { errorMessage: e }
         }
-    })
-    await Promise.all(promises)
+    }
     return { batchId }
 }
 
@@ -70,7 +69,7 @@ export async function validateAndSend(message: Message) {
     try {
         const receiveCount = parseInt(message.Attributes?.ApproximateReceiveCount || "0")
         if (receiveCount > 5) {
-            await sqsClient.send(
+            await sqsTransactionalClient.send(
                 new DeleteMessageCommand({
                     QueueUrl: QUEUE_URL.NEWSLETTER,
                     ReceiptHandle: message.ReceiptHandle,
@@ -82,7 +81,7 @@ export async function validateAndSend(message: Message) {
         const result = await sendMail(siteId, message.Body)
 
         if (result.batchId) {
-            await sqsClient.send(
+            await sqsTransactionalClient.send(
                 new DeleteMessageCommand({
                     QueueUrl: QUEUE_URL.NEWSLETTER,
                     ReceiptHandle: message.ReceiptHandle,

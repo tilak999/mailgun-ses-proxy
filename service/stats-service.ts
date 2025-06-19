@@ -4,7 +4,7 @@ import logger from "@/lib/logger";
 const log = logger.child({ path: "service/stats-service" })
 
 export async function getNewsletterUsage(input: { from: number; to: number; siteId: string }) {
-    log.debug({ input }, "getNewsletterUsage input")
+    log.debug({ input }, "[getNewsletterUsage] input")
     const searchParam = {
         where: {
             created: {

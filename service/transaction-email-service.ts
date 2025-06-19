@@ -1,5 +1,5 @@
 import { SendEmailCommand } from "@aws-sdk/client-sesv2"
-import { sesClient } from "../lib/awsHelper"
+import { sesTransactionalClient } from "../lib/awsHelper"
 import { EmailPayload } from "@/types/default"
 import logger from "@/lib/logger"
 import { prisma } from "@/lib/db"
@@ -47,7 +47,7 @@ export async function sendSystemMail(email: EmailPayload) {
     })
 
     const cmd = new SendEmailCommand(formatEmail(email))
-    const resp = await sesClient.send(cmd)
+    const resp = await sesTransactionalClient.send(cmd)
 
     if (resp.MessageId) {
         await prisma.systemMails.update({ data: { messageId: resp.MessageId, status: "sent" }, where: { id } })

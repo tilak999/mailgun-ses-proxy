@@ -70,3 +70,15 @@ export async function getNewsletterContent(id: string) {
     })
     return result && result.contents ? JSON.parse(result.contents) : null
 }
+
+export async function saveSystemEmailEvent(event: NotificationEvent) {
+    return prisma.newsletterNotifications.create({
+        data: {
+            messageId: event.messageId,
+            rawEvent: event.raw,
+            type: event.type,
+            notificationId: event.notificationId,
+            timestamp: event.timestamp,
+        },
+    })
+}

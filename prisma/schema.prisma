@@ -3,6 +3,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../lib/generated"
 }
 
 datasource db {
@@ -54,6 +55,17 @@ model NewsletterNotifications {
   newsletter     NewsletterMessages @relation(fields: [messageId], references: [messageId])
 }
 
+model SystemMailNotifications {
+  id             String      @id @default(uuid())
+  type           String
+  notificationId String      @unique
+  messageId      String
+  rawEvent       String      @db.Text
+  timestamp      DateTime
+  created        DateTime    @default(now())
+  systemMail     SystemMails @relation(fields: [messageId], references: [messageId])
+}
+
 enum SystemMailStatus {
   pending
   sent
@@ -61,13 +73,14 @@ enum SystemMailStatus {
 }
 
 model SystemMails {
-  id        String           @id @default(uuid())
-  messageId String           @default("")
-  fromEmail String           @db.Text
-  toEmail   String           @db.Text
-  subject   String           @db.Text
-  contents  String           @db.LongText
-  created   DateTime         @default(now())
-  updated   DateTime         @updatedAt
-  status    SystemMailStatus @default(pending)
+  id                      String                    @id @default(uuid())
+  messageId               String                    @unique
+  fromEmail               String                    @db.Text
+  toEmail                 String                    @db.Text
+  subject                 String                    @db.Text
+  contents                String                    @db.LongText
+  created                 DateTime                  @default(now())
+  updated                 DateTime                  @updatedAt
+  status                  SystemMailStatus          @default(pending)
+  SystemMailNotifications SystemMailNotifications[]
 }

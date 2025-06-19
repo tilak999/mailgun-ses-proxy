@@ -2,7 +2,7 @@ import { createServer, IncomingMessage, ServerResponse } from "http"
 import { parse } from "url"
 import next from "next"
 import logger from "./lib/logger"
-import { processEmailEventsQueue, processNewsletterQueue } from "./service/background-process"
+import { processNewsletterEventsQueue, processNewsletterQueue } from "./service/background-process"
 
 const port = parseInt(process.env.PORT || "3000")
 const dev = process.env.NODE_ENV !== "production"
@@ -20,5 +20,5 @@ app.prepare().then(() => {
     logger.info(`> Server listening at http://localhost:${port} as ${type}`)
     // process the SES queues for emails and events
     processNewsletterQueue()
-    processEmailEventsQueue()
+    processNewsletterEventsQueue()
 })

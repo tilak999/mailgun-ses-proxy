@@ -14,7 +14,7 @@
   "dependencies": {
     "@aws-sdk/client-sesv2": "^3.779.0",
     "@aws-sdk/client-sqs": "^3.777.0",
-    "@prisma/client": "^6.7.0",
+    "@prisma/client": "^6.10.1",
     "next": "15.2.4",
     "pino": "^9.6.0",
     "react": "^19.0.0",
@@ -27,7 +27,7 @@
     "@types/react-dom": "^19",
     "nodemon": "^3.1.9",
     "pino-pretty": "^13.0.0",
-    "prisma": "^6.7.0",
+    "prisma": "^6.10.1",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
     "typescript": "^5"
