@@ -1,5 +1,5 @@
 import { SendEmailCommand } from "@aws-sdk/client-sesv2"
-import { sesTransactionalClient } from "../lib/awsHelper"
+import { sesNewsletterClient, sesSystemClient } from "../lib/awsHelper"
 import { EmailPayload } from "@/types/default"
 import logger from "@/lib/logger"
 import { prisma } from "@/lib/db"
@@ -7,8 +7,10 @@ import { prisma } from "@/lib/db"
 const log = logger.child({ service: "service:transactional-email-service" })
 
 function formatEmail(email: EmailPayload) {
+    if (!process.env.TRANSACTIONAL_CONFIGURATION_SET_NAME)
+        throw "env variable TRANSACTIONAL_CONFIGURATION_SET_NAME is not defined"
     return {
-        ConfigurationSetName: process.env.AWS_TRANSACTIONAL_CONFIGURATION_SET_NAME,
+        ConfigurationSetName: process.env.TRANSACTIONAL_CONFIGURATION_SET_NAME,
         FromEmailAddress: email.from,
         Destination: {
             ToAddresses: email.to,
@@ -32,30 +34,27 @@ function formatEmail(email: EmailPayload) {
 
 
 export async function sendSystemMail(email: EmailPayload) {
-    if (!email.to) {
-        throw new Error("Email to address is required")
-    }
-
-    const { id } = await prisma.systemMails.create({
-        select: { id: true },
-        data: {
-            toEmail: email.to.join(","),
-            fromEmail: email.from,
-            subject: email.subject,
-            contents: email.html,
-        }
-    })
+    if (!email.to) throw new Error("Email to address is required")
 
     const cmd = new SendEmailCommand(formatEmail(email))
-    const resp = await sesTransactionalClient.send(cmd)
+    const resp = await sesSystemClient.send(cmd)
 
     if (resp.MessageId) {
-        await prisma.systemMails.update({ data: { messageId: resp.MessageId, status: "sent" }, where: { id } })
+        const { id } = await prisma.systemMails.create({
+            select: { id: true },
+            data: {
+                messageId: resp.MessageId,
+                toEmail: email.to.join(","),
+                fromEmail: email.from,
+                subject: email.subject,
+                contents: email.html,
+            }
+        })
         log.info({ resp, to: email.to }, "sending system mail, SES response")
-        return { id: resp.MessageId }
+        return { messageId: resp.MessageId, dbId: id }
     }
 
-    log.error({ resp, to: email.to }, "failed to send system mail")
+    log.error({ resp, email }, "failed to send system mail")
     throw new Error("Failed to send email");
 }
 

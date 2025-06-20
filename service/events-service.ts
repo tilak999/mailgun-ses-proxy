@@ -2,8 +2,8 @@ import { EventsProps, QueryParams } from "@/types/default"
 import { prisma, saveNewsletterNotification } from "../lib/db"
 import { formatAsMailgunEvent, parseNotificationEvent } from "../lib/utils"
 import { DeleteMessageCommand, ReceiveMessageCommandOutput } from "@aws-sdk/client-sqs"
-import { QUEUE_URL, sqsTransactionalClient } from "@/lib/awsHelper"
-import logger from "@/lib/logger"
+import logger from "../lib/logger"
+import { QUEUE_URL, sqsClient } from "../lib/awsHelper"
 
 function upsertStartParam(url: string, startVal: number) {
     url = url.slice(0, url.lastIndexOf("?"))
@@ -94,7 +94,7 @@ export async function processNewsletterEmailEvents(response: ReceiveMessageComma
                 QueueUrl: QUEUE_URL.NEWSLETTER_NOTIFICATION,
                 ReceiptHandle: msg.ReceiptHandle,
             })
-            await sqsTransactionalClient.send(command)
+            await sqsClient.send(command)
         }
     }
 }

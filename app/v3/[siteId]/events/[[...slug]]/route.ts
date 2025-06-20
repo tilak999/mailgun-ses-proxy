@@ -1,5 +1,5 @@
 import logger from "@/lib/logger"
-import { fetchAnalyticsEvents, getEmailEvents, validateQueryParams } from "@/service/email-event-service"
+import { fetchAnalyticsEvents, getEmailEvents, validateQueryParams } from "@/service/events-service"
 import { NextRequest } from "next/server"
 
 const log = logger.child({ path: "app/v3/events" })

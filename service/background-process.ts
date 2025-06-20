@@ -1,9 +1,9 @@
 import { MessageSystemAttributeName, ReceiveMessageCommand } from "@aws-sdk/client-sqs"
 import { validateAndSend } from "./newsletter-service"
-import { QUEUE_URL, sqsTransactionalClient } from "../lib/awsHelper"
-import logger from "../lib/logger"
-import { processNewsletterEmailEvents } from "./email-event-service"
+import { QUEUE_URL, sqsClient } from "../lib/awsHelper"
+import { processNewsletterEmailEvents } from "./events-service"
 import { processSystemEmailEvents } from "./system-email-notification"
+import logger from "../lib/logger"
 
 const log = logger.child({ service: "backgroundProcess" })
 
@@ -22,13 +22,11 @@ export async function processNewsletterQueue() {
     }
     const command = new ReceiveMessageCommand(input)
     while (true) {
-        let { Messages } = await sqsTransactionalClient.send(command)
+        let { Messages } = await sqsClient.send(command)
         if (Messages && Messages.length > 0) {
             for (const message of Messages) {
                 await validateAndSend(message)
             }
-        } else {
-            log.error("AWS SQS Message is empty")
         }
     }
 }
@@ -47,7 +45,7 @@ export async function processNewsletterEventsQueue() {
     }
     const command = new ReceiveMessageCommand(input)
     while (true) {
-        let response = await sqsTransactionalClient.send(command)
+        let response = await sqsClient.send(command)
         if (response.Messages) await processNewsletterEmailEvents(response)
     }
 }
@@ -66,7 +64,7 @@ export async function processSystemEventsQueue() {
     }
     const command = new ReceiveMessageCommand(input)
     while (true) {
-        let response = await sqsTransactionalClient.send(command)
+        let response = await sqsClient.send(command)
         if (response.Messages) await processSystemEmailEvents(response)
     }
 }

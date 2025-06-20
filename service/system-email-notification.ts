@@ -1,7 +1,7 @@
-import { QUEUE_URL, sqsTransactionalClient } from "@/lib/awsHelper"
-import { saveSystemEmailEvent } from "@/lib/db"
-import logger from "@/lib/logger"
-import { parseNotificationEvent } from "@/lib/utils"
+import { QUEUE_URL, sqsClient } from "../lib/awsHelper"
+import { saveSystemEmailEvent } from "../lib/db"
+import logger from "../lib/logger"
+import { parseNotificationEvent } from "../lib/utils"
 import { DeleteMessageCommand, ReceiveMessageCommandOutput } from "@aws-sdk/client-sqs"
 
 export async function processSystemEmailEvents(response: ReceiveMessageCommandOutput) {
@@ -20,7 +20,7 @@ export async function processSystemEmailEvents(response: ReceiveMessageCommandOu
                 QueueUrl: QUEUE_URL.SYSTEM_NOTIFICATION,
                 ReceiptHandle: msg.ReceiptHandle,
             })
-            await sqsTransactionalClient.send(command)
+            await sqsClient.send(command)
         }
     }
 }

@@ -18,6 +18,7 @@ export function preparePayload(input: any, siteId: string): SendEmailRequest[] {
     const recepientVariables = JSON.parse(input["recipient-variables"]) as MailgunRecipientVariables
     const receivers = Array.isArray(input.to) ? input.to : [input.to]
     const result = receivers.map((receiverEmail: string | number) => ({
+        ConfigurationSetName: process.env.NEWSLETTER_CONFIGURATION_SET_NAME,
         FromEmailAddress: input.from,
         Destination: { ToAddresses: [receiverEmail] },
         ReplyToAddresses: [input["h:Reply-To"]],

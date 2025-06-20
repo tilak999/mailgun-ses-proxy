@@ -7,8 +7,14 @@ export const QUEUE_URL = {
     SYSTEM_NOTIFICATION: process.env.TRANSACTIONAL_NOTIFICATION_QUEUE
 }
 
-export const sesTransactionalClient = new SESv2Client({ region: process.env.TRANSACTIONAL_REGION })
-export const sqsTransactionalClient = new SQSClient({ region: process.env.TRANSACTIONAL_REGION })
+const regions = (process.env.SES_REGION || "").split(",").map(s => s.trim())
 
-export const sesNewsletterClient = new SESv2Client({ region: process.env.NEWSLETTER_REGION })
-export const sqsNewsletterClient = new SQSClient({ region: process.env.NEWSLETTER_REGION })
+export function sesNewsletterClient() {
+    if (!process.env.SES_REGION) throw "env variable SES_REGION not found"
+    const region = regions[Math.floor(Math.random() * regions.length)];
+    const client = new SESv2Client({ region })
+    return client
+}
+
+export const sesSystemClient = new SESv2Client({ region: process.env.SES_TRANSACTIONAL_REGION || regions[0] })
+export const sqsClient = new SQSClient({ region: process.env.SQS_REGION })
