@@ -20,7 +20,7 @@ export async function processSystemEmailEvents(response: ReceiveMessageCommandOu
                 QueueUrl: QUEUE_URL.SYSTEM_NOTIFICATION,
                 ReceiptHandle: msg.ReceiptHandle,
             })
-            await sqsClient.send(command)
+            await sqsClient().send(command)
         }
     }
 }

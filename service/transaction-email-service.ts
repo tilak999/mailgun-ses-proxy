@@ -37,7 +37,7 @@ export async function sendSystemMail(email: EmailPayload) {
     if (!email.to) throw new Error("Email to address is required")
 
     const cmd = new SendEmailCommand(formatEmail(email))
-    const resp = await sesSystemClient.send(cmd)
+    const resp = await sesSystemClient().send(cmd)
 
     if (resp.MessageId) {
         const { id } = await prisma.systemMails.create({

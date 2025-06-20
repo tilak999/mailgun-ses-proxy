@@ -22,7 +22,7 @@ export async function processNewsletterQueue() {
     }
     const command = new ReceiveMessageCommand(input)
     while (true) {
-        let { Messages } = await sqsClient.send(command)
+        let { Messages } = await sqsClient().send(command)
         if (Messages && Messages.length > 0) {
             for (const message of Messages) {
                 await validateAndSend(message)
@@ -45,7 +45,7 @@ export async function processNewsletterEventsQueue() {
     }
     const command = new ReceiveMessageCommand(input)
     while (true) {
-        let response = await sqsClient.send(command)
+        let response = await sqsClient().send(command)
         if (response.Messages) await processNewsletterEmailEvents(response)
     }
 }
@@ -64,7 +64,7 @@ export async function processSystemEventsQueue() {
     }
     const command = new ReceiveMessageCommand(input)
     while (true) {
-        let response = await sqsClient.send(command)
+        let response = await sqsClient().send(command)
         if (response.Messages) await processSystemEmailEvents(response)
     }
 }

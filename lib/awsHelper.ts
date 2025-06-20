@@ -16,5 +16,14 @@ export function sesNewsletterClient() {
     return client
 }
 
-export const sesSystemClient = new SESv2Client({ region: process.env.SES_TRANSACTIONAL_REGION || regions[0] })
-export const sqsClient = new SQSClient({ region: process.env.SQS_REGION })
+export const sesSystemClient = () => {
+    const region = process.env.SES_TRANSACTIONAL_REGION || regions[0]
+    if (!region) throw "env SES_TRANSACTIONAL_REGION is not defined" 
+    return new SESv2Client({ region })
+}
+
+export const sqsClient = () => {
+    const region = process.env.SQS_REGION
+    if (!region) throw "env SQS_REGION is not defined"
+    return new SQSClient({ region })
+}

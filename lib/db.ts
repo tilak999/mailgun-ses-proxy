@@ -1,8 +1,8 @@
 import { SendEmailRequest } from "@aws-sdk/client-sesv2"
-import { PrismaClient } from "@prisma/client"
 import { NotificationEvent } from "./utils"
 import { MailgunMessage } from "@/types/mailgun"
 import { safeStringify } from "./common"
+import { PrismaClient } from "./generated"
 
 export const prisma = new PrismaClient()
 

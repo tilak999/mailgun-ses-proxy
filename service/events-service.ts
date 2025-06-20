@@ -94,7 +94,7 @@ export async function processNewsletterEmailEvents(response: ReceiveMessageComma
                 QueueUrl: QUEUE_URL.NEWSLETTER_NOTIFICATION,
                 ReceiptHandle: msg.ReceiptHandle,
             })
-            await sqsClient.send(command)
+            await sqsClient().send(command)
         }
     }
 }

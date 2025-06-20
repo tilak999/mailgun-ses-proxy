@@ -12,10 +12,12 @@ COPY --chown=node:node package*.json ./
 USER node
 
 RUN npm install
-RUN npm prune --production
 
 # Copy the rest of the source files into the image.
 COPY --chown=node:node . .
+
+# build code
+RUN npm run build
 
 # Expose the port that the application listens on.
 EXPOSE 8080

@@ -28,7 +28,7 @@ export async function addNewsletterToQueue(message: any, siteId: string, auth: a
         },
     }
     const command = new SendMessageCommand(params)
-    const response = await sqsClient.send(command)
+    const response = await sqsClient().send(command)
     return { batchId: message["v:email-id"], messageId: response.MessageId }
 }
 
@@ -69,7 +69,7 @@ export async function validateAndSend(message: Message) {
     try {
         const receiveCount = parseInt(message.Attributes?.ApproximateReceiveCount || "0")
         if (receiveCount > 5) {
-            await sqsClient.send(
+            await sqsClient().send(
                 new DeleteMessageCommand({
                     QueueUrl: QUEUE_URL.NEWSLETTER,
                     ReceiptHandle: message.ReceiptHandle,
@@ -81,7 +81,7 @@ export async function validateAndSend(message: Message) {
         const result = await sendMail(siteId, message.Body)
 
         if (result.batchId) {
-            await sqsClient.send(
+            await sqsClient().send(
                 new DeleteMessageCommand({
                     QueueUrl: QUEUE_URL.NEWSLETTER,
                     ReceiptHandle: message.ReceiptHandle,
