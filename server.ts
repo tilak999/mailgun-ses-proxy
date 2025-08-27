@@ -18,7 +18,9 @@ app.prepare().then(() => {
     createServer(handler).listen(port)
     const type = dev ? "development" : process.env.NODE_ENV
     logger.info(`> Server listening at http://localhost:${port} as ${type}`)
+    
     // process the SES queues for emails and events
-    processNewsletterQueue()
-    processNewsletterEventsQueue()
-})
+    processNewsletterQueue().then(()=> process.exit(1))
+    processNewsletterEventsQueue().then(()=> process.exit(1))
+    
+}).catch((e)=>{logger.error(e, "stopping the server."); process.exit(1)})

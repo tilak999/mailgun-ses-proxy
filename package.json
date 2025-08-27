@@ -10,7 +10,8 @@
     "lint": "next lint",
     "db:migrate:dev": "prisma migrate dev",
     "db:migrate": "prisma migrate deploy",
-    "db:generate": "prisma generate"
+    "db:generate": "prisma generate",
+    "test": "vitest"
   },
   "dependencies": {
     "@aws-sdk/client-sesv2": "^3.779.0",
@@ -31,6 +32,7 @@
     "pino-pretty": "^13.0.0",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   }
 }
