@@ -1,9 +1,9 @@
 import logger from "@/lib/logger"
-import { fetchAnalyticsEvents, getEmailEvents, validateQueryParams } from "@/service/events-service"
+import { fetchAnalyticsEvents, validateQueryParams } from "@/service/events-service"
 import { NextRequest } from "next/server"
 
 const log = logger.child({ path: "app/v3/events" })
-type pathParam = { params: Promise<{ siteId: string, slug: string[] | undefined }> }
+type pathParam = { params: Promise<{ siteId: string, slug?: string[] }> }
 
 /**
  * Endpoint to fetch email events

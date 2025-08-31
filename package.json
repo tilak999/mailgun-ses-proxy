@@ -17,7 +17,7 @@
     "@aws-sdk/client-sesv2": "^3.779.0",
     "@aws-sdk/client-sqs": "^3.777.0",
     "@prisma/client": "^6.10.1",
-    "next": "15.2.4",
+    "next": "^15.5.2",
     "pino": "^9.6.0",
     "prisma": "^6.10.1",
     "react": "^19.0.0",

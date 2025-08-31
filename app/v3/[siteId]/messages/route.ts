@@ -14,7 +14,7 @@ export async function POST(req: Request, { params }: pathParam) {
         const data = formDataToObject(await req.formData())
         // data.html, data.text
         const { messageId, batchId } = await addNewsletterToQueue(data, siteId, null)
-        log.info("message queued to newsletter SQS", { messageId })
+        log.info({ messageId },"message queued to newsletter SQS",)
         return Response.json({ id: batchId })
     } catch (e) {
         log.error(e, "Error when queuing message to newsletter SQS")

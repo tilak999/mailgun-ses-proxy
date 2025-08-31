@@ -4,7 +4,7 @@ import logger from "@/lib/logger";
 const log = logger.child({ path: "service/stats-service" })
 
 export async function getNewsletterUsage(input: { from: number; to: number; siteId: string }) {
-    log.debug({ input }, "[getNewsletterUsage] input")
+    log.debug({ input }, "[getNewsletterUsage] input parameters")
     const searchParam = {
         where: {
             created: {
@@ -16,7 +16,7 @@ export async function getNewsletterUsage(input: { from: number; to: number; site
             }
         },
     }
-    const usageCount = await prisma.newsletterMessages.count()
+    const usageCount = await prisma.newsletterMessages.count(searchParam);
     return {
         status: "ok",
         data: {
