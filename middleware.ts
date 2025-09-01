@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { authentication } from "./service/authenticate";
+import logger from "./lib/logger";
 
 /**
  * Middleware to check for a valid API key in the request headers
@@ -11,6 +12,8 @@ import { authentication } from "./service/authenticate";
 const whitelist = [
     "/healthcheck",
 ]
+
+const log = logger.child({ path: "middleware" })
 
 export async function middleware(request: NextRequest) {
     if (whitelist.some((path) => request.nextUrl.pathname.startsWith(path))) {
@@ -23,7 +26,7 @@ export async function middleware(request: NextRequest) {
             return NextResponse.next();
         }
     }
-    console.error("API key not found")
+    log.error({ path: request.nextUrl.pathname }, "API key not found")
     return Response.json({ error: 'authentication failed' }, { status: 401 })
 }
 
