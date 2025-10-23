@@ -13,7 +13,7 @@ export async function POST(req: Request, { params }: pathParam) {
     try {
         const data = formDataToObject(await req.formData())
         // fixing Ghost `email_previews` endpoint call
-        data["v:email-id"] = data["v:email-id"] || "fake-email-id-bypass-mgm"
+        data["v:email-id"] = data["v:email-id"] || "no-batch-id-provided"
         // data.html, data.text
         const { messageId, batchId } = await addNewsletterToQueue(data, siteId, null)
         log.info({ messageId },"message queued to newsletter SQS",)
