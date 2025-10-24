@@ -1,7 +1,5 @@
-import logger from "@/lib/logger"
+import { ApiResponse, ErrorHandler, ValidationService, logger } from "@/lib/core"
 import { sendSystemMail } from "@/service/transaction-email-service"
-import { EmailPayload } from "@/types/default"
-import { stringifyError } from "next/dist/shared/lib/utils"
 import { NextRequest } from "next/server"
 
 const log = logger.child({ module: "route:send" })
@@ -9,20 +7,54 @@ const log = logger.child({ module: "route:send" })
 /**
  * Endpoint to send system emails
  * @route POST /v1/send
- * @returns Response {  id: string | undefined }
+ * @returns Response with standardized format
  */
 export async function POST(req: NextRequest) {
-    const body = await req.json()
-    const payload = body as unknown as EmailPayload
-    payload.from = process.env.SYSTEM_FROM_ADDRESS || ""
-
     try {
+        // Parse request body
+        const body = await req.json()
+
+        // Add system `from` address if not provided
+        if (!body.from) {
+            body.from = process.env.SYSTEM_FROM_ADDRESS || ""
+        }
+
+        // Add replyTo if not provided (use from address as default)
+        if (!body.replyTo) {
+            body.replyTo = body.from
+        }
+
+        // Validate email payload
+        const validation = ValidationService.validateEmailPayload(body)
+        if (!validation.isValid) {
+            log.warn({ errors: validation.errors }, "Invalid email payload received")
+            return ApiResponse.validationError(validation.errors.join(", "))
+        }
+
+        const payload = validation.data!
+
+        // Send email
         const result = await sendSystemMail(payload)
-        log.info({}, `mail sent to "${payload.to}" with messageId: ${result.messageId}`)
-        return Response.json(result)
+
+        log.info(
+            {
+                to: payload.to,
+                messageId: result.messageId,
+            },
+            `System email sent successfully`
+        )
+
+        return ApiResponse.success(result)
     } catch (error) {
-        const errorMsg = error as {name: string, message: string}
-        log.error({ error: errorMsg.message, to: payload.to }, "failed to send system email")
-        return Response.json({ error: "Failed to send email" }, { status: 500 })
+        const errorResponse = ErrorHandler.handleApiError(error, "POST /v1/send")
+        log.error(
+            {
+                error: errorResponse.error,
+                message: errorResponse.message,
+            },
+            "Failed to send system email"
+        )
+
+        return ErrorHandler.createResponse(errorResponse)
     }
 }
