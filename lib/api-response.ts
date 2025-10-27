@@ -124,10 +124,17 @@ export class ApiResponse {
     }
 
     /**
-     * Unprocessable Entity (422) - Validation error
+     * Validation Error (400) - Validation error
      */
     static validationError(message: string, details?: any): Response {
-        return this.error(message, ERROR_TYPES.VALIDATION_ERROR, HTTP_STATUS.UNPROCESSABLE_ENTITY, details)
+        return Response.json(
+            {
+                success: false,
+                error: ERROR_TYPES.VALIDATION_ERROR,
+                message,
+            },
+            { status: HTTP_STATUS.BAD_REQUEST }
+        )
     }
 
     /**

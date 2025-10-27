@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 const EmailPayloadSchema = z.object({
-    from: z.string().email(),
-    replyTo: z.string().email().optional(),
-    to: z.array(z.string()),
+    from: z.email(),
+    replyTo: z.string().optional(),
+    to: z.array(z.string()).min(1),
     subject: z.string(),
     html: z.string()
 })
@@ -22,7 +22,7 @@ export class ValidationService {
         } catch(e) {
             if (e instanceof z.ZodError) {
                 return {
-                    errors: e.issues.map(err => `${err.path.join('.')}: ${err.message}`),
+                    errors: e.issues.map(err => `'${err.path.join('.')}': ${err.message}`),
                 }
             }
             return {

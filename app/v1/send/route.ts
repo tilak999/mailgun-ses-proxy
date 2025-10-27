@@ -78,11 +78,9 @@ export async function POST(req: NextRequest): Promise<Response> {
 async function parseRequestBody(req: NextRequest): Promise<Record<string, any>> {
     try {
         const body = await req.json()
-
         if (!body || typeof body !== "object") {
             throw new Error("Request body must be a valid JSON object")
         }
-
         return body
     } catch (error) {
         if (error instanceof SyntaxError) {

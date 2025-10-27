@@ -1,27 +1,39 @@
-import logger from "@/lib/core/logger"
+/**
+ * Error Handler Service
+ * Provides standardized error handling and response creation
+ */
+
+export interface ErrorResponse {
+    error: string
+    message: string
+    status: number
+}
 
 export class ErrorHandler {
-    static handleApiError(error: unknown, context: string) {
-        const log = logger.child({ context })
-
+    /**
+     * Handle API errors and convert them to standardized error objects
+     */
+    static handleApiError(error: any, context?: string): ErrorResponse {
         if (error instanceof Error) {
-            log.error({ error: error.message, stack: error.stack }, "API Error occurred")
             return {
-                error: error.name,
+                error: error.name || 'Error',
                 message: error.message,
                 status: 500,
             }
         }
 
-        log.error({ error }, "Unknown API Error occurred")
+        // Handle non-Error exceptions
         return {
-            error: "Unknown Error",
-            message: "An unexpected error occurred",
+            error: 'Unknown Error',
+            message: 'An unexpected error occurred',
             status: 500,
         }
     }
 
-    static createResponse(errorResponse: { error: string; message: string; status: number }) {
+    /**
+     * Create a Response object from an error response
+     */
+    static createResponse(errorResponse: ErrorResponse): Response {
         return Response.json(
             {
                 error: errorResponse.error,
