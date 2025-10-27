@@ -3,7 +3,7 @@
 ![build](https://img.shields.io/badge/Build-OK-green)
 ![Dynamic JSON Badge](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Ftilak999%2Fmailgun-ses-proxy%2Frefs%2Fheads%2Fmain%2Fpackage.json&query=%24.version&label=version)
 ![GitHub License](https://img.shields.io/github/license/tilak999/mailgun-ses-proxy)
-![build](https://img.shields.io/badge/Sponsor-typetale.app-purple)
+[![typetale.app](https://img.shields.io/badge/Sponsor-typetale.app-purple)](https://typetale.app?utm=mailgun-proxy)
 
 > API server that acts as Mailgun server to proxy emails to SES
 
