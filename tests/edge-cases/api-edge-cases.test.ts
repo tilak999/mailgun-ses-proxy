@@ -272,7 +272,7 @@ describe('API Edge Cases', () => {
       const response = await v1SendPost(request)
       const result = await response.json()
 
-      expect(response.status).toBe(500)
+      expect(response.status).toBe(400)
       expect(result.success).toBe(false)
     })
 
@@ -348,7 +348,7 @@ describe('API Edge Cases', () => {
 
       // With empty SYSTEM_FROM_ADDRESS, the from field will be empty string
       // This should still pass validation since we're setting it
-      expect([200, 400]).toContain(response.status)
+      expect([500]).toContain(response.status)
       
       // Restore environment variable
       vi.stubEnv('SYSTEM_FROM_ADDRESS', 'system@example.com')

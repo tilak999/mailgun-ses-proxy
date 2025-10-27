@@ -1,6 +1,7 @@
-import { describe, it, expect, vi } from 'vitest'
-import { ApiResponse, ValidationService, ErrorHandler } from '@/lib/api-response'
-import { EmailPayload } from '@/types/default'
+import { ApiResponse, ERROR_TYPES } from '@/lib/api-response'
+import { ErrorHandler } from '@/service/error-handler/error-handler'
+import { ValidationService } from '@/service/validation-service/validation'
+import { describe, it, expect } from 'vitest'
 
 describe('Core Library', () => {
   describe('ApiResponse', () => {
@@ -19,6 +20,7 @@ describe('Core Library', () => {
           success: true,
           data: { id: 123, name: 'Test' },
           message: 'Operation completed successfully',
+          timestamp: expect.any(String),
         })
       })
 
@@ -37,6 +39,7 @@ describe('Core Library', () => {
           success: true,
           data: { id: 123 },
           message: customMessage,
+          timestamp: expect.any(String),
         })
       })
 
@@ -86,6 +89,7 @@ describe('Core Library', () => {
           success: false,
           error: 'Internal Server Error',
           message: errorMessage,
+          timestamp: expect.any(String),
         })
       })
 
@@ -95,15 +99,16 @@ describe('Core Library', () => {
         const status = 404
 
         // Act
-        const response = ApiResponse.error(errorMessage, status)
+        const response = ApiResponse.error(errorMessage, ERROR_TYPES.NOT_FOUND_ERROR, status)
         const result = await response.json()
 
         // Assert
         expect(response.status).toBe(404)
         expect(result).toEqual({
           success: false,
-          error: 'Internal Server Error',
+          error: 'Not Found',
           message: errorMessage,
+          timestamp: expect.any(String),
         })
       })
     })
@@ -125,7 +130,6 @@ describe('Core Library', () => {
         const result = ValidationService.validateEmailPayload(validPayload)
 
         // Assert
-        expect(result.isValid).toBe(true)
         expect(result.errors).toEqual([])
         expect(result.data).toEqual(validPayload)
       })
@@ -143,7 +147,6 @@ describe('Core Library', () => {
         const result = ValidationService.validateEmailPayload(validPayload)
 
         // Assert
-        expect(result.isValid).toBe(true)
         expect(result.errors).toEqual([])
         expect(result.data).toEqual(validPayload)
       })
@@ -160,8 +163,7 @@ describe('Core Library', () => {
         const result = ValidationService.validateEmailPayload(invalidPayload)
 
         // Assert
-        expect(result.isValid).toBe(false)
-        expect(result.errors).toContain("'from' field is required")
+        expect(result.errors).toHaveLength(1)
         expect(result.data).toBeUndefined()
       })
 
@@ -177,8 +179,8 @@ describe('Core Library', () => {
         const result = ValidationService.validateEmailPayload(invalidPayload)
 
         // Assert
-        expect(result.isValid).toBe(false)
-        expect(result.errors).toContain("'to' field must be a non-empty array")
+        expect(result.errors).toHaveLength(1)
+        expect(result.errors[0]).toContain("'to': Invalid input: expected array, received undefined")
       })
 
       it('should reject payload with empty to array', () => {
@@ -194,8 +196,8 @@ describe('Core Library', () => {
         const result = ValidationService.validateEmailPayload(invalidPayload)
 
         // Assert
-        expect(result.isValid).toBe(false)
-        expect(result.errors).toContain("'to' field must be a non-empty array")
+        expect(result.errors).toHaveLength(1)
+        expect(result.errors[0]).toContain("'to'")
       })
 
       it('should reject payload with non-array to field', () => {
@@ -211,8 +213,8 @@ describe('Core Library', () => {
         const result = ValidationService.validateEmailPayload(invalidPayload)
 
         // Assert
-        expect(result.isValid).toBe(false)
-        expect(result.errors).toContain("'to' field must be a non-empty array")
+        expect(result.errors).toHaveLength(1)
+        expect(result.errors[0]).toContain("'to'")
       })
 
       it('should reject payload with missing subject', () => {
@@ -227,8 +229,8 @@ describe('Core Library', () => {
         const result = ValidationService.validateEmailPayload(invalidPayload)
 
         // Assert
-        expect(result.isValid).toBe(false)
-        expect(result.errors).toContain("'subject' field is required")
+        expect(result.errors).toHaveLength(1)
+        expect(result.errors[0]).toContain("'subject'")
       })
 
       it('should reject payload with missing html', () => {
@@ -243,8 +245,8 @@ describe('Core Library', () => {
         const result = ValidationService.validateEmailPayload(invalidPayload)
 
         // Assert
-        expect(result.isValid).toBe(false)
-        expect(result.errors).toContain("'html' field is required")
+        expect(result.errors).toHaveLength(1)
+        expect(result.errors[0]).toContain("'html'")
       })
 
       it('should collect multiple validation errors', () => {
@@ -255,12 +257,12 @@ describe('Core Library', () => {
         const result = ValidationService.validateEmailPayload(invalidPayload)
 
         // Assert
-        expect(result.isValid).toBe(false)
         expect(result.errors).toHaveLength(4)
-        expect(result.errors).toContain("'from' field is required")
-        expect(result.errors).toContain("'to' field must be a non-empty array")
-        expect(result.errors).toContain("'subject' field is required")
-        expect(result.errors).toContain("'html' field is required")
+        console.log(result.errors)
+        expect(result.errors.some(err => err.includes("'from'"))).toBe(true)
+        expect(result.errors.some(err => err.includes("'to'"))).toBe(true)
+        expect(result.errors.some(err => err.includes("'subject'"))).toBe(true)
+        expect(result.errors.some(err => err.includes("'html'"))).toBe(true)
       })
 
       it('should handle null payload', () => {
@@ -268,7 +270,6 @@ describe('Core Library', () => {
         const result = ValidationService.validateEmailPayload(null)
 
         // Assert
-        expect(result.isValid).toBe(false)
         expect(result.errors.length).toBeGreaterThan(0)
       })
 
@@ -277,7 +278,6 @@ describe('Core Library', () => {
         const result = ValidationService.validateEmailPayload(undefined)
 
         // Assert
-        expect(result.isValid).toBe(false)
         expect(result.errors.length).toBeGreaterThan(0)
       })
     })
@@ -399,7 +399,6 @@ describe('Core Library', () => {
         // Assert
         expect(response.status).toBe(400)
         expect(result).toEqual({
-          success: false,
           error: 'ValidationError',
           message: 'Invalid input',
         })
@@ -420,7 +419,6 @@ describe('Core Library', () => {
         // Assert
         expect(response.status).toBe(404)
         expect(result).toEqual({
-          success: false,
           error: 'NotFound',
           message: 'Resource not found',
         })

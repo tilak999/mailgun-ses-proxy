@@ -36,9 +36,11 @@ describe('/v1/send POST', () => {
     expect(response.status).toBe(200)
     expect(result).toEqual({
       success: true,
+      timestamp: result.timestamp,
       data: {
         messageId: 'msg-123',
-        dbId: 'db-123',
+        recipients: 1,
+        status: "sent",
       },
       message: 'Operation completed successfully',
     })
@@ -134,7 +136,7 @@ describe('/v1/send POST', () => {
     expect(result).toEqual({
       success: false,
       error: 'Validation Error',
-      message: "'to' field must be a non-empty array",
+      message: "Validation failed: 'to': Invalid input: expected array, received undefined",
     })
     expect(sendSystemMail).not.toHaveBeenCalled()
   })
@@ -160,7 +162,7 @@ describe('/v1/send POST', () => {
     expect(result).toEqual({
       success: false,
       error: 'Validation Error',
-      message: "'to' field must be a non-empty array",
+      message: "Validation failed: 'to': Too small: expected array to have >=1 items",
     })
   })
 
@@ -181,7 +183,7 @@ describe('/v1/send POST', () => {
 
     // Assert
     expect(response.status).toBe(400)
-    expect(result.message).toContain("'subject' field is required")
+    expect(result.message).toContain("'subject'")
   })
 
   it('should return validation error for missing html', async () => {
@@ -201,7 +203,7 @@ describe('/v1/send POST', () => {
 
     // Assert
     expect(response.status).toBe(400)
-    expect(result.message).toContain("'html' field is required")
+    expect(result.message).toContain("'html'")
   })
 
   it('should return validation error with multiple missing fields', async () => {
@@ -218,9 +220,7 @@ describe('/v1/send POST', () => {
 
     // Assert
     expect(response.status).toBe(400)
-    expect(result.message).toContain("'to' field must be a non-empty array")
-    expect(result.message).toContain("'subject' field is required")
-    expect(result.message).toContain("'html' field is required")
+    expect(result.message).toContain("Validation failed: 'to': Invalid input: expected array, received undefined; 'subject': Invalid input: expected string, received undefined; 'html': Invalid input: expected string, received undefined")
   })
 
   it('should handle service errors gracefully', async () => {
@@ -244,9 +244,11 @@ describe('/v1/send POST', () => {
 
     // Assert
     expect(response.status).toBe(500)
+    expect(result).toHaveProperty("timestamp")
+    delete result.timestamp
     expect(result).toEqual({
       success: false,
-      error: 'Error',
+      error: 'Internal Server Error',
       message: 'SES service unavailable',
     })
   })
@@ -265,8 +267,9 @@ describe('/v1/send POST', () => {
     expect(response.status).toBe(500)
     expect(result).toEqual({
       success: false,
-      error: 'Error',
+      error: 'Internal Server Error',
       message: 'Invalid JSON',
+      timestamp: result.timestamp
     })
   })
 
@@ -321,10 +324,8 @@ describe('/v1/send POST', () => {
 
     // Assert
     expect(response.status).toBe(500)
-    expect(result).toEqual({
-      success: false,
-      error: 'Unknown Error',
-      message: 'An unexpected error occurred',
-    })
+    expect(result.success).toBe(false) 
+    expect(result.error).toBe("Internal Server Error")
+    expect(result.message).toBe("An unexpected error occurred")
   })
 })

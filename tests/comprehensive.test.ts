@@ -5,9 +5,11 @@ import { POST as statsPost } from "@/app/stats/[action]/route"
 import { addNewsletterToQueue } from "@/service/newsletter-service"
 import { sendSystemMail } from "@/service/transaction-email-service"
 import { getNewsletterUsage } from "@/service/stats-service"
-import { formDataToObject } from "@/lib/form-data-to-object"
-import { ApiResponse, ValidationService, ErrorHandler } from "@/lib/api-response"
+import { ApiResponse } from "@/lib/api-response"
 import { NextRequest } from "next/server"
+import { formDataToObject } from "@/lib/core/common"
+import { ValidationService } from "@/service/validation-service/validation"
+import { ErrorHandler } from "@/service/error-handler/error-handler"
 
 describe("Comprehensive API Test Suite", () => {
     beforeEach(() => {
@@ -206,8 +208,6 @@ describe("Comprehensive API Test Suite", () => {
             }
 
             const result = ValidationService.validateEmailPayload(validPayload)
-
-            expect(result.isValid).toBe(true)
             expect(result.errors).toEqual([])
             expect(result.data).toEqual(validPayload)
         })
@@ -216,12 +216,10 @@ describe("Comprehensive API Test Suite", () => {
             const invalidPayload = {}
 
             const result = ValidationService.validateEmailPayload(invalidPayload)
-
-            expect(result.isValid).toBe(false)
-            expect(result.errors).toContain("'from' field is required")
-            expect(result.errors).toContain("'to' field must be a non-empty array")
-            expect(result.errors).toContain("'subject' field is required")
-            expect(result.errors).toContain("'html' field is required")
+            expect(result.errors[0]).toContain("'from'")
+            expect(result.errors[1]).toContain("'to'")
+            expect(result.errors[2]).toContain("'subject'")
+            expect(result.errors[3]).toContain("'html'")
         })
 
         it("should create proper API responses", async () => {
@@ -233,6 +231,7 @@ describe("Comprehensive API Test Suite", () => {
                 success: true,
                 data: { id: 123 },
                 message: "Custom message",
+                timestamp: successResult.timestamp
             })
 
             const errorResponse = ApiResponse.validationError("Validation failed")

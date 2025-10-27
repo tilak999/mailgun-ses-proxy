@@ -1,5 +1,5 @@
+import { formDataToObject } from '@/lib/core/common'
 import { describe, it, expect } from 'vitest'
-import { formDataToObject } from '@/lib/form-data-to-object'
 
 describe('formDataToObject', () => {
   describe('basic functionality', () => {

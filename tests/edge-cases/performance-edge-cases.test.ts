@@ -5,8 +5,8 @@ import { POST as statsPost } from '@/app/stats/[action]/route'
 import { addNewsletterToQueue } from '@/service/newsletter-service'
 import { sendSystemMail } from '@/service/transaction-email-service'
 import { getNewsletterUsage } from '@/service/stats-service'
-import { formDataToObject } from '@/lib/form-data-to-object'
 import { NextRequest } from 'next/server'
+import { formDataToObject } from '@/lib/core/common'
 
 describe('Performance Edge Cases', () => {
   beforeEach(() => {
