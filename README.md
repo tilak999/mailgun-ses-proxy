@@ -1,15 +1,13 @@
-<center>
-
-<h1>Mailgun-to-SES Proxy</h1>
+# Mailgun-to-SES Proxy
 
 ![build](https://img.shields.io/badge/Build-OK-green)
 ![Dynamic JSON Badge](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Ftilak999%2Fmailgun-ses-proxy%2Frefs%2Fheads%2Fmain%2Fpackage.json&query=%24.version&label=version)
 ![GitHub License](https://img.shields.io/github/license/tilak999/mailgun-ses-proxy)
 ![build](https://img.shields.io/badge/Sponsor-typetale.app-purple)
 
-This API server acts as a proxy to enable sending newsletter emails from Ghost using Amazon SES (Simple Email Service) instead of Mailgun. It mimics the Mailgun API endpoints while routing the actual email-sending logic through SES on the backend.
+> API server that acts as Mailgun server to proxy emails to SES
 
-</center>
+This API server acts as a proxy to enable sending newsletter emails from Ghost using Amazon SES (Simple Email Service) instead of Mailgun. It mimics the Mailgun API endpoints while routing the actual email-sending logic through SES on the backend.
 
 ## Purpose
 
@@ -309,7 +307,8 @@ curl -X POST http://localhost:3000/v3/your-site-id/messages \
 -   Use HTTPS in production deployments
 -   Regularly update dependencies for security patches
 
-## In production
+## Adopted by
 The Mailgun-to-SES proxy is currently being used in production at [typetale.app](https://typetale.app) for sending both newsletter and transactional emails. It has proven to be a stable and scalable solution that meets all the service requirements.
  
-
+## License
+AGPL-3 
