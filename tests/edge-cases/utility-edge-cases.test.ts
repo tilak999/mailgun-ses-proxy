@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { formDataToObject } from '@/lib/form-data-to-object'
-import { ApiResponse, ValidationService, ErrorHandler } from '@/lib/core'
+import { ApiResponse, ValidationService, ErrorHandler } from '@/lib/api-response'
 
 describe('Utility Edge Cases', () => {
   describe('formDataToObject Edge Cases', () => {

@@ -1,8 +1,8 @@
 import { SendEmailCommand } from "@aws-sdk/client-sesv2"
-import { sesNewsletterClient, sesSystemClient } from "../lib/awsHelper"
+import { sesNewsletterClient, sesSystemClient } from "./aws/awsHelper"
 import { EmailPayload } from "@/types/default"
-import logger from "@/lib/logger"
-import { prisma } from "@/lib/db"
+import logger from "@/lib/core/logger"
+import { prisma } from "@/service/database/db"
 
 const log = logger.child({ service: "service:transactional-email-service" })
 

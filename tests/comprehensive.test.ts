@@ -6,7 +6,7 @@ import { addNewsletterToQueue } from "@/service/newsletter-service"
 import { sendSystemMail } from "@/service/transaction-email-service"
 import { getNewsletterUsage } from "@/service/stats-service"
 import { formDataToObject } from "@/lib/form-data-to-object"
-import { ApiResponse, ValidationService, ErrorHandler } from "@/lib/core"
+import { ApiResponse, ValidationService, ErrorHandler } from "@/lib/api-response"
 import { NextRequest } from "next/server"
 
 describe("Comprehensive API Test Suite", () => {

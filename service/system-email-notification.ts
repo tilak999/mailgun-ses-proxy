@@ -1,7 +1,7 @@
-import { QUEUE_URL, sqsClient } from "../lib/awsHelper"
-import { saveSystemEmailEvent } from "../lib/db"
-import logger from "../lib/logger"
-import { parseNotificationEvent } from "../lib/utils"
+import { QUEUE_URL, sqsClient } from "./aws/awsHelper"
+import { saveSystemEmailEvent } from "./database/db"
+import logger from "../lib/core/logger"
+import { parseNotificationEvent } from "../lib/core/aws-utils"
 import { DeleteMessageCommand, ReceiveMessageCommandOutput } from "@aws-sdk/client-sqs"
 
 export async function processSystemEmailEvents(response: ReceiveMessageCommandOutput) {

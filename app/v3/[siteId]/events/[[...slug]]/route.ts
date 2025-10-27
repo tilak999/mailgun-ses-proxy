@@ -1,4 +1,4 @@
-import logger from "@/lib/logger"
+import logger from "@/lib/core/logger"
 import { fetchAnalyticsEvents, validateQueryParams } from "@/service/events-service"
 import { NextRequest } from "next/server"
 

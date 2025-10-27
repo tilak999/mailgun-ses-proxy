@@ -1,5 +1,5 @@
-import { prisma } from "@/lib/db";
-import logger from "@/lib/logger";
+import { prisma } from "@/service/database/db";
+import logger from "@/lib/core/logger";
 
 const log = logger.child({ path: "service/stats-service" })
 

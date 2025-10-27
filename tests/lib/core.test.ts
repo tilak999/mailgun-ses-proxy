@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { ApiResponse, ValidationService, ErrorHandler } from '@/lib/core'
+import { ApiResponse, ValidationService, ErrorHandler } from '@/lib/api-response'
 import { EmailPayload } from '@/types/default'
 
 describe('Core Library', () => {

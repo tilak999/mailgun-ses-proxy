@@ -1,4 +1,4 @@
-import logger from "@/lib/logger";
+import logger from "@/lib/core/logger";
 import { getNewsletterUsage } from "@/service/stats-service";
 
 const log = logger.child({ path: "app/stats/[action]" })

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { authentication } from "./service/authenticate";
-import logger from "./lib/logger";
+import { authentication } from "./lib/authentication";
+import logger from "./lib/core/logger";
 
 /**
  * Middleware to check for a valid API key in the request headers
