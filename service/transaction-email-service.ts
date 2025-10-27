@@ -1,8 +1,8 @@
 import { SendEmailCommand } from "@aws-sdk/client-sesv2"
-import { sesNewsletterClient, sesSystemClient } from "./aws/awsHelper"
-import { EmailPayload } from "@/types/default"
+import { sesSystemClient } from "./aws/awsHelper"
 import logger from "@/lib/core/logger"
 import { prisma } from "@/service/database/db"
+import { EmailPayload } from "./validation-service/validation"
 
 const log = logger.child({ service: "service:transactional-email-service" })
 
@@ -15,7 +15,7 @@ function formatEmail(email: EmailPayload) {
         Destination: {
             ToAddresses: email.to,
         },
-        ReplyToAddresses: [email.replyTo],
+        ReplyToAddresses: email.replyTo ? [email.replyTo] : [],
         FeedbackForwardingEmailAddress: email.replyTo || email.from,
         Content: {
             Simple: {

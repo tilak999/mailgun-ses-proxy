@@ -15,7 +15,7 @@ const whitelist = [
 
 const log = logger.child({ path: "middleware" })
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     if (whitelist.some((path) => request.nextUrl.pathname.startsWith(path))) {
         return NextResponse.next();
     }
