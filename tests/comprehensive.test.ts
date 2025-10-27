@@ -43,7 +43,7 @@ describe("Comprehensive API Test Suite", () => {
 
             // Assert
             expect(response.status).toBe(200)
-            expect(result).toEqual({ id: "batch-123" })
+            expect(result.id).toEqual("batch-123")
             expect(addNewsletterToQueue).toHaveBeenCalledWith(
                 expect.objectContaining({
                     from: "newsletter@example.com",

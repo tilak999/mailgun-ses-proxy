@@ -59,7 +59,7 @@ interface FormDataToObjectOptions {
  * Represents the structure of the object returned by formDataToObject.
  * Keys are strings, and values are either strings or arrays of strings.
  */
-type FormDataObject = Record<string, string | string[]>;
+type FormDataObject= { [key: string]: string | string[] } 
 
 /**
  * Converts a FormData object into a plain JavaScript object suitable for JSON serialization.
@@ -105,7 +105,7 @@ export function formDataToObject(
         return;
     }
 
-    if (Reflect.has(obj, key)) {
+    if (key in obj) {
       // Key already exists
       const currentValue = obj[key]; // Type: string | string[]
 

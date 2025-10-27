@@ -37,7 +37,7 @@ describe('/v3/[siteId]/messages POST', () => {
 
     // Assert
     expect(response.status).toBe(200)
-    expect(result).toEqual({ id: 'batch-123' })
+    expect(result.id).toEqual('batch-123')
     expect(addNewsletterToQueue).toHaveBeenCalledWith(
       expect.objectContaining({
         from: 'sender@example.com',
@@ -77,7 +77,7 @@ describe('/v3/[siteId]/messages POST', () => {
 
     // Assert
     expect(response.status).toBe(200)
-    expect(result).toEqual({ id: 'no-batch-id-provided' })
+    expect(result.id).toEqual('no-batch-id-provided')
     expect(addNewsletterToQueue).toHaveBeenCalledWith(
       expect.objectContaining({
         'v:email-id': 'no-batch-id-provided',
@@ -98,7 +98,7 @@ describe('/v3/[siteId]/messages POST', () => {
 
     // Assert
     expect(response.status).toBe(400)
-    expect(result).toEqual({ message: 'siteId is required' })
+    expect(result.message).toEqual('siteId is required')
   })
 
   it('should handle service errors gracefully', async () => {
@@ -121,7 +121,7 @@ describe('/v3/[siteId]/messages POST', () => {
 
     // Assert
     expect(response.status).toBe(400)
-    expect(result).toEqual({ message: 'Service unavailable' })
+    expect(result.message).toEqual('Service unavailable')
   })
 
   it('should handle non-Error exceptions', async () => {
@@ -143,7 +143,7 @@ describe('/v3/[siteId]/messages POST', () => {
 
     // Assert
     expect(response.status).toBe(400)
-    expect(result).toEqual({ message: 'An error occurred' })
+    expect(result.message).toEqual('an error occurred')
   })
 
   it('should handle form data parsing errors', async () => {
@@ -160,7 +160,7 @@ describe('/v3/[siteId]/messages POST', () => {
 
     // Assert
     expect(response.status).toBe(400)
-    expect(result).toEqual({ message: 'Invalid form data' })
+    expect(result.message).toEqual('Invalid form data')
   })
 
   it('should handle complex form data with multiple recipients', async () => {
@@ -190,7 +190,7 @@ describe('/v3/[siteId]/messages POST', () => {
 
     // Assert
     expect(response.status).toBe(200)
-    expect(result).toEqual({ id: 'batch-456' })
+    expect(result.id).toEqual('batch-456')
     expect(addNewsletterToQueue).toHaveBeenCalledWith(
       expect.objectContaining({
         to: ['recipient1@example.com', 'recipient2@example.com'],

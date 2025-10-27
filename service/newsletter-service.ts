@@ -10,7 +10,7 @@ const log = logger.child({ service: "service:newsletter-service" })
 
 export async function addNewsletterToQueue(message: any, siteId: string, auth: any) {
     if (!message) throw new Error("Message body is empty or invalid.")
-    log.debug({ message }, "message body sent to SQS")
+    log.debug({ message }, "sending message body to SQS")
 
     const result = await createNewsletterBatchEntry(siteId, message)
     const params = {

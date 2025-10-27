@@ -258,7 +258,6 @@ describe('Core Library', () => {
 
         // Assert
         expect(result.errors).toHaveLength(4)
-        console.log(result.errors)
         expect(result.errors.some(err => err.includes("'from'"))).toBe(true)
         expect(result.errors.some(err => err.includes("'to'"))).toBe(true)
         expect(result.errors.some(err => err.includes("'subject'"))).toBe(true)

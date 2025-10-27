@@ -27,21 +27,22 @@ export const ERROR_TYPES = {
     SERVICE_ERROR: "Service Unavailable",
 } as const
 
+export interface ApiResponse {
+    success: boolean
+    timestamp: string
+    [key: string]: any
+}
+
 /**
  * API Response structure interfaces
  */
-export interface SuccessResponse<T = any> {
-    success: true
-    data: T
+export interface SuccessResponse extends ApiResponse{
     message: string
-    timestamp: string
 }
 
-export interface ErrorResponse {
-    success: false
+export interface ErrorResponse extends ApiResponse {
     error: string
     message: string
-    timestamp: string
     details?: any
 }
 
@@ -50,21 +51,26 @@ export interface ErrorResponse {
  * Provides consistent response formatting across the application
  */
 export class ApiResponse {
+
+    static raw<T>(data: T, status: number = HTTP_STATUS.OK): Response {
+        const response: ApiResponse = {
+            success: true,
+            ...data,
+            timestamp: new Date().toISOString(),
+        }
+        return Response.json(response, { status })
+    }
+
     /**
      * Create a standardized success response
      */
-    static success<T>(
-        data: T,
-        message: string = "Operation completed successfully",
-        status: number = HTTP_STATUS.OK
-    ): Response {
-        const response: SuccessResponse<T> = {
+    static success<T>(data: T, message: string = "Operation completed successfully", status: number = HTTP_STATUS.OK): Response {
+        const response: SuccessResponse = {
             success: true,
             data,
-            message,
             timestamp: new Date().toISOString(),
+            message: message
         }
-
         return Response.json(response, { status })
     }
 

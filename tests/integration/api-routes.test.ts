@@ -39,7 +39,7 @@ describe('API Routes Integration', () => {
 
       // Assert - Newsletter queued successfully
       expect(newsletterResponse.status).toBe(200)
-      expect(newsletterResult).toEqual({ id: 'newsletter-batch-123' })
+      expect(newsletterResult.id).toEqual('newsletter-batch-123')
 
       // Arrange - System email notification
       const systemEmailPayload = {
