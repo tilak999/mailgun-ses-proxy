@@ -1,4 +1,3 @@
-
 export interface MailgunRecipientVariables {
     [key: string]: {
         uuid: string
@@ -57,12 +56,4 @@ export interface QueryParams {
     begin: number
     end: number
     order: "asc" | "desc"
-}
-
-export interface EmailPayload {
-    from: string
-    replyTo: string
-    to: string[]
-    subject: string
-    html: string
 }

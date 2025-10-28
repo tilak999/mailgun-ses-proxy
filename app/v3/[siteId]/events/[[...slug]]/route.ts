@@ -1,4 +1,4 @@
-import logger from "@/lib/logger"
+import logger from "@/lib/core/logger"
 import { fetchAnalyticsEvents, validateQueryParams } from "@/service/events-service"
 import { NextRequest } from "next/server"
 
@@ -6,16 +6,19 @@ const log = logger.child({ path: "app/v3/events" })
 type pathParam = { params: Promise<{ siteId: string, slug?: string[] }> }
 
 /**
- * Endpoint to fetch email events
- * @route GET /v3/[siteId]/events/[...slug]
- * @returns Response: {
-    items: MailgunEvents[];
-    paging: {
-        next: string;
-    }
-}
-*/
-export async function GET(req: NextRequest, { params }: pathParam) {
+ * GET /api/v3/events/{siteId}/{...slug}
+ * 
+ * Retrieves analytics events for a specific site with optional filtering parameters.
+ * 
+ * @param req - The Next.js request object containing query parameters
+ * @param params - Path parameters containing siteId and optional slug array
+ * @param params.siteId - The unique identifier for the site
+ * @param params.slug - Optional array of additional path segments
+ * 
+ * @returns JSON response containing analytics events data or error message
+ * 
+ */
+async function fetchAnalyticsEvent(req: NextRequest, { params }: pathParam) {
     const { siteId, slug } = await params
     try {
         const queryParams = validateQueryParams(req.nextUrl.searchParams)
@@ -29,3 +32,5 @@ export async function GET(req: NextRequest, { params }: pathParam) {
         return Response.json({ message: errorMessage }, { status: 400 })
     }
 }
+
+export const GET = fetchAnalyticsEvent 

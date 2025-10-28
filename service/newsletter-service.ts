@@ -1,16 +1,16 @@
-import { preparePayload } from "../lib/utils"
-import { safeStringify } from "../lib/common"
+import { preparePayload } from "../lib/core/aws-utils"
+import { safeStringify } from "../lib/core/common"
 import { SendEmailCommand } from "@aws-sdk/client-sesv2"
 import { DeleteMessageCommand, Message, SendMessageCommand } from "@aws-sdk/client-sqs"
-import { createNewsletterBatchEntry, createNewsletterEntry, createNewsletterErrorEntry, getNewsletterContent } from "../lib/db"
-import { QUEUE_URL, sesNewsletterClient, sqsClient } from "../lib/awsHelper"
-import logger from "../lib/logger"
+import { createNewsletterBatchEntry, createNewsletterEntry, createNewsletterErrorEntry, getNewsletterContent } from "./database/db"
+import { QUEUE_URL, sesNewsletterClient, sqsClient } from "./aws/awsHelper"
+import logger from "../lib/core/logger"
 
 const log = logger.child({ service: "service:newsletter-service" })
 
 export async function addNewsletterToQueue(message: any, siteId: string, auth: any) {
     if (!message) throw new Error("Message body is empty or invalid.")
-    log.debug({ message }, "message body sent to SQS")
+    log.debug({ message }, "sending message body to SQS")
 
     const result = await createNewsletterBatchEntry(siteId, message)
     const params = {

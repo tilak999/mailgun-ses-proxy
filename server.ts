@@ -1,7 +1,7 @@
 import { createServer, IncomingMessage, ServerResponse } from "http"
 import { parse } from "url"
 import next from "next"
-import logger from "./lib/logger"
+import logger from "./lib/core/logger"
 import { processNewsletterEventsQueue, processNewsletterQueue } from "./service/background-process"
 
 const port = parseInt(process.env.PORT || "3000")
