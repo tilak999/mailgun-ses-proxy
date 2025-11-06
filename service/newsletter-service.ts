@@ -50,9 +50,25 @@ async function sendMail(siteId: string, dbId: string) {
     const contents = await getNewsletterContent(dbId)
     const sendEmailRequests = preparePayload(contents, siteId)
     const batchId = contents["v:email-id"]
-    for (const request of sendEmailRequests) {
-        await sendSingleMail(request, dbId, siteId, batchId);
+    
+    // Rate limit: 20 calls per second
+    const RATE_LIMIT = 20
+    const INTERVAL_MS = 1000
+    
+    // Process requests in batches with rate limiting
+    for (let i = 0; i < sendEmailRequests.length; i += RATE_LIMIT) {
+        const batch = sendEmailRequests.slice(i, i + RATE_LIMIT)
+        const promises = batch.map(request => sendSingleMail(request, dbId, siteId, batchId))
+        
+        // Wait for all requests in this batch to complete
+        await Promise.all(promises)
+        
+        // Wait 1 second before processing the next batch (except for the last batch)
+        if (i + RATE_LIMIT < sendEmailRequests.length) {
+            await new Promise(resolve => setTimeout(resolve, INTERVAL_MS))
+        }
     }
+    
     return { batchId }
 }
 
