@@ -60,8 +60,15 @@ async function sendMail(siteId: string, dbId: string) {
         const batch = sendEmailRequests.slice(i, i + RATE_LIMIT)
         const promises = batch.map(request => sendSingleMail(request, dbId, siteId, batchId))
         
-        // Wait for all requests in this batch to complete
-        await Promise.all(promises)
+        // Wait for all requests in this batch to complete (allSettled ensures all attempts are made even if some fail)
+        const results = await Promise.allSettled(promises)
+        
+        // Log batch summary for monitoring
+        const successful = results.filter(r => r.status === 'fulfilled').length
+        const failed = results.filter(r => r.status === 'rejected').length
+        if (failed > 0) {
+            log.warn({ successful, failed, batchId }, "Some emails failed in batch")
+        }
         
         // Wait 1 second before processing the next batch (except for the last batch)
         if (i + RATE_LIMIT < sendEmailRequests.length) {
