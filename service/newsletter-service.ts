@@ -52,8 +52,8 @@ async function sendMail(siteId: string, dbId: string) {
     const batchId = contents["v:email-id"]
     
     // Rate limit: 20 calls per second
-    const RATE_LIMIT = 20
-    const INTERVAL_MS = 1000
+    const RATE_LIMIT = Number(process.env.RATE_LIMIT) || 20;
+    const INTERVAL_MS = 1000;
     
     // Process requests in batches with rate limiting
     for (let i = 0; i < sendEmailRequests.length; i += RATE_LIMIT) {
