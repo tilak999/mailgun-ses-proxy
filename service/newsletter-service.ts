@@ -60,7 +60,8 @@ async function sendMail(siteId: string, dbId: string) {
     sendEmailRequests.forEach(req => {
         q.addToQueue(
             () => sendSingleMail(req, dbId, siteId, batchId),
-            req.Destination.ToAddresses.join(',')
+            /* TODO: How can Destination be null? Check types */
+            req.Destination?.ToAddresses?.join(',')
         );
     });
 
