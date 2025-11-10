@@ -5,6 +5,7 @@ import { DeleteMessageCommand, Message, SendMessageCommand } from "@aws-sdk/clie
 import { createNewsletterBatchEntry, createNewsletterEntry, createNewsletterErrorEntry, getNewsletterContent } from "./database/db"
 import { QUEUE_URL, sesNewsletterClient, sqsClient } from "./aws/awsHelper"
 import logger from "../lib/core/logger"
+import { createQueue } from "./utils/queue"
 
 const log = logger.child({ service: "service:newsletter-service" })
 
@@ -51,30 +52,22 @@ async function sendMail(siteId: string, dbId: string) {
     const sendEmailRequests = preparePayload(contents, siteId)
     const batchId = contents["v:email-id"]
     
-    // Rate limit: 20 calls per second
     const RATE_LIMIT = Number(process.env.RATE_LIMIT) || 20;
-    const INTERVAL_MS = 1000;
+
+    const q = createQueue({rateLimit: RATE_LIMIT});
     
-    // Process requests in batches with rate limiting
-    for (let i = 0; i < sendEmailRequests.length; i += RATE_LIMIT) {
-        const batch = sendEmailRequests.slice(i, i + RATE_LIMIT)
-        const promises = batch.map(request => sendSingleMail(request, dbId, siteId, batchId))
-        
-        // Wait for all requests in this batch to complete (allSettled ensures all attempts are made even if some fail)
-        const results = await Promise.allSettled(promises)
-        
-        // Log batch summary for monitoring
-        const successful = results.filter(r => r.status === 'fulfilled').length
-        const failed = results.filter(r => r.status === 'rejected').length
-        if (failed > 0) {
-            log.warn({ successful, failed, batchId }, "Some emails failed in batch")
-        }
-        
-        // Wait 1 second before processing the next batch (except for the last batch)
-        if (i + RATE_LIMIT < sendEmailRequests.length) {
-            await new Promise(resolve => setTimeout(resolve, INTERVAL_MS))
-        }
-    }
+    // Process requests with rate limiting
+    sendEmailRequests.forEach(req => {
+        q.addToQueue(
+            () => sendSingleMail(req, dbId, siteId, batchId),
+            req.Destination.ToAddresses.join(',')
+        );
+    });
+
+    const results = await new Promise((resolve) => {
+      q.onFinish((stats) => resolve(stats));
+    });
+    console.log('Finished queue', results);
     
     return { batchId }
 }
