@@ -6,6 +6,8 @@ import { createNewsletterBatchEntry, createNewsletterEntry, createNewsletterErro
 import { QUEUE_URL, sesNewsletterClient, sqsClient } from "./aws/awsHelper"
 import logger from "../lib/core/logger"
 import { createQueue } from "./utils/queue"
+// @ts-ignore
+import { randomUUID } from "node:crypto"
 
 const log = logger.child({ service: "service:newsletter-service" })
 
@@ -41,8 +43,14 @@ async function sendSingleMail(request: SendEmailRequest, dbId: string, siteId: s
         await createNewsletterEntry(messageId, dbId, request)
         log.info({ messageId, siteId }, "email sent")
     } catch (e) {
-        log.error(e, "error occurred at sendMail")
-        await createNewsletterErrorEntry(String(e), siteId, batchId, request)
+        // SES failed (timeout, throttle, etc.) - generate temp messageId for error logging
+        const tempMessageId = randomUUID()
+        log.error({ error: e, tempMessageId, siteId }, "SES send failed, recording error entry")
+        try {
+            await createNewsletterErrorEntry(tempMessageId, String(e), batchId, request)
+        } catch (dbError) {
+            log.error({ dbError, tempMessageId, siteId }, "failed to record error entry in database")
+        }
         return { errorMessage: e }
     }
 }
