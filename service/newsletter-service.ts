@@ -6,7 +6,6 @@ import { createNewsletterBatchEntry, createNewsletterEntry, createNewsletterErro
 import { QUEUE_URL, sesNewsletterClient, sqsClient } from "./aws/awsHelper"
 import logger from "../lib/core/logger"
 import { createQueue } from "./utils/queue"
-// @ts-ignore
 import { randomUUID } from "node:crypto"
 
 const log = logger.child({ service: "service:newsletter-service" })

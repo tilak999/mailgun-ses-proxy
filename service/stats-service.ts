@@ -3,7 +3,18 @@ import logger from "@/lib/core/logger";
 
 const log = logger.child({ path: "service/stats-service" })
 
-export async function getNewsletterUsage(input: { from: number; to: number; siteId: string }) {
+interface NewsletterUsage {
+    forRange: { 
+        gte: Date,
+        lte: Date 
+    },
+    count: number,
+    timestamp: String,
+}
+
+export type GetNewsletterUsageQuery = { from: number; to: number; siteId: string }
+
+export async function getNewsletterUsage(input: GetNewsletterUsageQuery): Promise<NewsletterUsage> {
     log.debug({ input }, "[getNewsletterUsage] input parameters")
     const searchParam = {
         where: {
@@ -18,12 +29,8 @@ export async function getNewsletterUsage(input: { from: number; to: number; site
     }
     const usageCount = await prisma.newsletterMessages.count(searchParam);
     return {
-        status: "ok",
-        data: {
-            forRange: { ...searchParam.where.created },
-            message: "newsletter usage",
-            count: usageCount,
-            timestamp: new Date().toISOString(),
-        },
+        forRange: { ...searchParam.where.created },
+        count: usageCount,
+        timestamp: new Date().toISOString(),
     }
 }

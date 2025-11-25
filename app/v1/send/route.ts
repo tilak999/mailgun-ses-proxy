@@ -4,8 +4,6 @@ import { sendSystemMail } from "@/service/transaction-email-service"
 import { ValidationService, type EmailPayload } from "@/service/validation-service/validation"
 import { NextRequest } from "next/server"
 
-const log = logger.child({ module: "api:v1:send" })
-
 /**
  * Send system emails via SES
  *
@@ -15,8 +13,7 @@ const log = logger.child({ module: "api:v1:send" })
  * @returns {ApiResponse} - Standardized API response with message ID on success
  */
 export async function POST(req: NextRequest): Promise<Response> {
-    const requestId = crypto.randomUUID()
-    const requestLog = log.child({ requestId })
+    const requestLog = logger.child({ requestId: crypto.randomUUID(), module: "api:v1:send" })
 
     try {
         requestLog.info("Processing system email request")
@@ -35,13 +32,11 @@ export async function POST(req: NextRequest): Promise<Response> {
                 },
                 "Email payload validation failed"
             )
-
             return ApiResponse.validationError(`Validation failed: ${validation.errors.join("; ")}`)
         }
 
         // Send email through SES
         const result = await sendSystemMail(validation.data)
-
         requestLog.info(
             {
                 messageId: result.messageId,
@@ -57,7 +52,7 @@ export async function POST(req: NextRequest): Promise<Response> {
             recipients: validation.data.to.length,
         })
     } catch (error) {
-        requestLog.error({ error, requestId }, "Failed to send system email")
+        requestLog.error({ error }, "Failed to send system email")
 
         // Handle different error types
         if (error instanceof SyntaxError) {

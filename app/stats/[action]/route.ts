@@ -1,17 +1,26 @@
-import logger from "@/lib/core/logger";
-import { getNewsletterUsage } from "@/service/stats-service";
+import logger from "@/lib/core/logger"
+import { getNewsletterUsage, GetNewsletterUsageQuery } from "@/service/stats-service"
 
 const log = logger.child({ path: "app/stats/[action]" })
 
-type pathParam = { params: Promise<{ action: string }> }
+type PathParam = { params: Promise<{ action: string }> }
 
-export async function POST(req: Request, { params }: pathParam) {
-    const input = (await req.json()) as { from: number; to: number; siteId: string }
+/**
+ * This method allows fetching the stats for a Site, based on siteId and date range
+ * @param GetNewsletterUsageQuery
+ * @param PathParam
+ * @returns
+ */
+export async function POST(req: Request, { params }: PathParam) {
+    const input = (await req.json()) as GetNewsletterUsageQuery
     try {
         switch ((await params).action) {
             case "getNewsletterUsage":
                 const result = await getNewsletterUsage(input)
-                return Response.json(result)
+                return Response.json({
+                    status: "ok",
+                    data: { message: "newsletter usage", ...result },
+                })
             default:
                 return Response.json({ message: "Invalid action" }, { status: 400 })
         }
