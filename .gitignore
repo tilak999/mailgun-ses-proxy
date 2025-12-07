@@ -42,3 +42,4 @@ next-env.d.ts
 
 # nextjs build
 dist
+lib/generated
