@@ -6,7 +6,7 @@
     "dev": "nodemon",
     "next:build": "next build --webpack",
     "docker:build": "docker build -t mailgun-to-ses-proxy .",
-    "build": "prisma generate && next build --webpack && tsc --project tsconfig.server.json && tsc-alias -p tsconfig.server.json",
+    "build": "prisma generate && next build --webpack && tsc --project tsconfig.server.json",
     "start": "NODE_ENV=production prisma migrate deploy && node dist/server.js",
     "lint": "next lint",
     "db:migrate:dev": "prisma migrate dev",
