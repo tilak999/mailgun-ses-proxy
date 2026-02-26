@@ -1,8 +1,10 @@
 import { SendEmailRequest } from "@aws-sdk/client-sesv2"
-import { NotificationEvent } from "../../lib/core/aws-utils"
 import { MailgunMessage } from "@/types/mailgun"
+import { NotificationEvent } from "../../lib/core/aws-utils"
 import { safeStringify } from "../../lib/core/common"
-import { prisma } from "@/lib/database"
+import { PrismaClient } from "../../lib/generated"
+
+export const prisma = new PrismaClient()
 
 export async function createNewsletterBatchEntry(siteId: string, message: MailgunMessage) {
     const batchId = message["v:email-id"]

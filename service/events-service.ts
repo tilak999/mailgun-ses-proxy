@@ -1,10 +1,9 @@
 import { EventsProps, QueryParams } from "@/types/default"
+import { prisma, saveNewsletterNotification } from "./database/db"
 import { formatAsMailgunEvent, parseNotificationEvent } from "../lib/core/aws-utils"
 import { DeleteMessageCommand, ReceiveMessageCommandOutput } from "@aws-sdk/client-sqs"
 import logger from "../lib/core/logger"
 import { QUEUE_URL, sqsClient } from "./aws/awsHelper"
-import { prisma } from "@/lib/database"
-import { saveNewsletterNotification } from "./database/db"
 
 function upsertStartParam(url: string, startVal: number) {
     url = url.slice(0, url.lastIndexOf("?"))
