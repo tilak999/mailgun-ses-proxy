@@ -3,6 +3,7 @@ ARG NODE_VERSION=20
 FROM node:${NODE_VERSION}-alpine
 
 ENV NODE_ENV=production
+ENV DATABASE_URL="mysql://user:pass@localhost/db"
 
 RUN mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
 
