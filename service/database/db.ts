@@ -1,6 +1,6 @@
 import { SendEmailRequest } from "@aws-sdk/client-sesv2"
-import { NotificationEvent } from "../../lib/core/aws-utils"
 import { MailgunMessage } from "@/types/mailgun"
+import { NotificationEvent } from "../../lib/core/aws-utils"
 import { safeStringify } from "../../lib/core/common"
 import { PrismaClient } from "../../lib/generated"
 
