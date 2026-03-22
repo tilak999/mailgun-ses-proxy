@@ -2,6 +2,7 @@ import { SendEmailRequest } from "@aws-sdk/client-sesv2"
 import { replaceAll } from "./common"
 import { MailgunEvents, MailgunRecipientVariables } from "@/types/default"
 import { Prisma } from "../generated"
+import { MailgunMessage } from "@/types/mailgun"
 
 function doSubstitution(inputText: string, substitutions: MailgunRecipientVariables[0]) {
     for (const key of Object.keys(substitutions)) {
@@ -14,14 +15,18 @@ function doSubstitution(inputText: string, substitutions: MailgunRecipientVariab
     return inputText
 }
 
-export function preparePayload(input: any, siteId: string): SendEmailRequest[] {
-    const recepientVariables = JSON.parse(input["recipient-variables"]) as MailgunRecipientVariables
+export function preparePayload(input: MailgunMessage, siteId: string): SendEmailRequest[] {
+    const recipientVariablesStr = input["recipient-variables"] as unknown as string
+    const recepientVariables = (typeof recipientVariablesStr === 'string' 
+        ? JSON.parse(recipientVariablesStr) 
+        : recipientVariablesStr) as MailgunRecipientVariables
+
     const receivers = Array.isArray(input.to) ? input.to : [input.to]
-    const result = receivers.map((receiverEmail: string | number) => ({
+    const result = receivers.map((receiverEmail: string) => ({
         ConfigurationSetName: process.env.NEWSLETTER_CONFIGURATION_SET_NAME,
         FromEmailAddress: input.from,
         Destination: { ToAddresses: [receiverEmail] },
-        ReplyToAddresses: [input["h:Reply-To"]],
+        ReplyToAddresses: [input["h:Reply-To"] || input.from],
         Content: {
             Simple: {
                 Subject: {
@@ -29,10 +34,10 @@ export function preparePayload(input: any, siteId: string): SendEmailRequest[] {
                 },
                 Body: {
                     Text: {
-                        Data: doSubstitution(input.text, recepientVariables[receiverEmail]),
+                        Data: doSubstitution(input.text || "", recepientVariables[receiverEmail] || {}),
                     },
                     Html: {
-                        Data: doSubstitution(input.html, recepientVariables[receiverEmail]),
+                        Data: doSubstitution(input.html || "", recepientVariables[receiverEmail] || {}),
                     },
                 },
                 Headers: [
@@ -40,10 +45,12 @@ export function preparePayload(input: any, siteId: string): SendEmailRequest[] {
                         Name: "List-Unsubscribe-Post",
                         Value: "List-Unsubscribe=One-Click",
                     },
-                    {
-                        Name: "List-Unsubscribe",
-                        Value: `<${recepientVariables[receiverEmail].unsubscribe_url}>`,
-                    },
+                    ...(recepientVariables[receiverEmail]?.unsubscribe_url ? [
+                        {
+                            Name: "List-Unsubscribe",
+                            Value: `<${recepientVariables[receiverEmail].unsubscribe_url}>`,
+                        }
+                    ] : []),
                 ],
             },
         },
@@ -54,7 +61,7 @@ export function preparePayload(input: any, siteId: string): SendEmailRequest[] {
             },
             {
                 Name: "batchId",
-                Value: input["v:email-id"],
+                Value: (input["v:email-id"] as string) || "no-batch-id",
             },
             {
                 Name: "ghost-email",
@@ -96,7 +103,7 @@ export function parseNotificationEvent(messageId: string, inputEvent: string): N
         notificationId: messageId,
         type: String(awsToMailgunType[event.eventType]).toLocaleLowerCase(),
         messageId: event.mail.messageId,
-        timestamp: event.open?.timestamp || new Date(),
+        timestamp: event.open?.timestamp || event.mail.timestamp || new Date(),
         raw: inputEvent,
     }
 }

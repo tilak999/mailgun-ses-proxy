@@ -5,10 +5,11 @@ import { DeleteMessageCommand, Message, SendMessageCommand } from "@aws-sdk/clie
 import { createNewsletterBatchEntry, createNewsletterEntry, createNewsletterErrorEntry, getNewsletterContent } from "./database/db"
 import { QUEUE_URL, sesNewsletterClient, sqsClient } from "./aws/awsHelper"
 import logger from "../lib/core/logger"
+import { MailgunMessage } from "@/types/mailgun"
 
 const log = logger.child({ service: "service:newsletter-service" })
 
-export async function addNewsletterToQueue(message: any, siteId: string, auth: any) {
+export async function addNewsletterToQueue(message: MailgunMessage, siteId: string) {
     if (!message) throw new Error("Message body is empty or invalid.")
     log.debug({ message }, "sending message body to SQS")
 
@@ -34,6 +35,9 @@ export async function addNewsletterToQueue(message: any, siteId: string, auth: a
 
 async function sendMail(siteId: string, dbId: string) {
     const contents = await getNewsletterContent(dbId)
+    if (!contents) {
+        throw new Error(`Newsletter content not found for batch id: ${dbId}`)
+    }
     const sendEmailRequests = preparePayload(contents, siteId)
     const batchId = contents["v:email-id"]
     for (const requests of sendEmailRequests) {
@@ -46,15 +50,25 @@ async function sendMail(siteId: string, dbId: string) {
         } catch (e) {
             log.error(e, "error occurred at sendMail")
             await createNewsletterErrorEntry(String(e), siteId, batchId, requests)
-            return { errorMessage: e }
         }
     }
     return { batchId }
 }
 
+async function deleteMessage(receiptHandle?: string) {
+    if (!receiptHandle) return
+    await sqsClient().send(
+        new DeleteMessageCommand({
+            QueueUrl: QUEUE_URL.NEWSLETTER,
+            ReceiptHandle: receiptHandle,
+        })
+    )
+}
+
 export async function validateAndSend(message: Message) {
     if (!message.MessageAttributes || !message.Body) {
-        log.error({ message: safeStringify(message) }, "invalid message")
+        log.error({ message: safeStringify(message) }, "invalid message, deleting from queue")
+        await deleteMessage(message.ReceiptHandle)
         return
     }
 
@@ -62,7 +76,8 @@ export async function validateAndSend(message: Message) {
     const from = message.MessageAttributes["from"]?.StringValue
 
     if (!siteId || !from) {
-        log.error({ message: safeStringify(message) }, "missing required message attributes")
+        log.error({ message: safeStringify(message) }, "missing required message attributes, deleting from queue")
+        await deleteMessage(message.ReceiptHandle)
         return
     }
 
