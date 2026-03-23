@@ -3,5 +3,10 @@
     "prettier.printWidth": 120,
     "prettier.semi": false,
     "prettier.tabWidth": 4,
-    "cSpell.words": ["mailgun", "sesv"]
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit",
+        "source.fixAll.eslint": "explicit"
+    },
+    "cSpell.words": ["mailgun"]
 }

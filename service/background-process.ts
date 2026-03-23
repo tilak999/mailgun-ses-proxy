@@ -1,9 +1,9 @@
 import { MessageSystemAttributeName, ReceiveMessageCommand } from "@aws-sdk/client-sqs"
-import { validateAndSend } from "./newsletter-service"
+import logger from "../lib/core/logger"
 import { QUEUE_URL, sqsClient } from "./aws/awsHelper"
 import { processNewsletterEmailEvents } from "./events-service"
+import { validateAndSend } from "./newsletter-service"
 import { processSystemEmailEvents } from "./system-email-notification"
-import logger from "../lib/core/logger"
 
 const log = logger.child({ service: "backgroundProcess" })
 

@@ -4,8 +4,8 @@ import logger from "../lib/core/logger"
 import { parseNotificationEvent } from "../lib/core/aws-utils"
 import { DeleteMessageCommand, ReceiveMessageCommandOutput } from "@aws-sdk/client-sqs"
 
+const log = logger.child({ service: "processSystemEmailEvents" })
 export async function processSystemEmailEvents(response: ReceiveMessageCommandOutput) {
-    const log = logger.child({ service: "processSystemEmailEvents" })
     if (!response.Messages || response.Messages.length == 0)
         throw new Error("No messages found")
     for (const msg of response.Messages) {
