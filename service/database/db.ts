@@ -2,9 +2,8 @@ import { SendEmailRequest } from "@aws-sdk/client-sesv2"
 import { MailgunMessage } from "@/types/mailgun"
 import { NotificationEvent } from "../../lib/core/aws-utils"
 import { safeStringify } from "../../lib/core/common"
-import { PrismaClient } from "../../lib/generated"
-
-export const prisma = new PrismaClient()
+import { prisma } from "../../lib/database"
+export { prisma }
 
 export async function createNewsletterBatchEntry(siteId: string, message: MailgunMessage) {
     const batchId = message["v:email-id"] || "no-batch-id-provided"
@@ -48,6 +47,14 @@ export async function createNewsletterErrorEntry(
             formatedContents: safeStringify(payload),
             toEmail
         },
+    })
+}
+
+export async function getNewsletterMessage(messageId: string) {
+    return prisma.newsletterMessages.findFirst({
+        where: {
+            messageId,
+        }
     })
 }
 
