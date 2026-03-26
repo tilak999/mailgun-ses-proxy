@@ -1,7 +1,14 @@
 import pino from 'pino';
 
-const logger = pino({
-    level: process.env.NODE_ENV != "production" ? 'debug' : 'info'
-});
+function resolveLogLevel() {
+    const envLevel = process.env.LOG_LEVEL
+    if (envLevel) return envLevel
+    return process.env.NODE_ENV != "production" ? "debug" : "info"
+}
+
+const logger = pino(
+    { level: resolveLogLevel() },
+    pino.destination({ sync: true })
+);
 
 export default logger.child({ app: "mailgun-ses-proxy" });

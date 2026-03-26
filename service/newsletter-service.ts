@@ -1,13 +1,22 @@
-import { preparePayload } from "../lib/core/aws-utils"
-import { safeStringify } from "../lib/core/common"
+import { MailgunMessage } from "@/types/mailgun"
 import { SendEmailCommand } from "@aws-sdk/client-sesv2"
 import { DeleteMessageCommand, Message, SendMessageCommand } from "@aws-sdk/client-sqs"
-import { createNewsletterBatchEntry, createNewsletterEntry, createNewsletterErrorEntry, getNewsletterContent } from "./database/db"
-import { QUEUE_URL, sesNewsletterClient, sqsClient } from "./aws/awsHelper"
+import { randomUUID } from "node:crypto"
+import { PreparedEmail, preparePayload } from "../lib/core/aws-utils"
+import { safeStringify } from "../lib/core/common"
 import logger from "../lib/core/logger"
-import { MailgunMessage } from "@/types/mailgun"
+import { QUEUE_URL, sesNewsletterClient, sqsClient } from "./aws/awsHelper"
+import {
+    createNewsletterBatchEntry,
+    createNewsletterEntry,
+    createNewsletterErrorEntry,
+    getNewsletterContent,
+    shouldPersistNewsletterFormattedContents,
+} from "./database/db"
+import { createQueue } from "./utils/queue"
 
 const log = logger.child({ service: "service:newsletter-service" })
+const PERSIST_NEWSLETTER_FORMATTED_CONTENTS = shouldPersistNewsletterFormattedContents()
 
 export async function addNewsletterToQueue(message: MailgunMessage, siteId: string) {
     if (!message) throw new Error("Message body is empty or invalid.")
@@ -33,26 +42,49 @@ export async function addNewsletterToQueue(message: MailgunMessage, siteId: stri
     return { batchId: message["v:email-id"], messageId: response.MessageId }
 }
 
-async function sendMail(siteId: string, dbId: string) {
-    const contents = await getNewsletterContent(dbId)
+async function sendSingleMail(prepared: PreparedEmail, newsletterBatchId: string, siteId: string, emailBatchId: string) {
+    const { request, recipientVariables } = prepared
+    const toEmail = request.Destination?.ToAddresses?.join() || ""
+    const recipientData = JSON.stringify({ toEmail, variables: recipientVariables })
+    const formatedContents = PERSIST_NEWSLETTER_FORMATTED_CONTENTS ? safeStringify(request) : ""
+    try {
+        const cmd = new SendEmailCommand(request)
+        const resp = await sesNewsletterClient().send(cmd)
+        const messageId = resp.MessageId as string
+        await createNewsletterEntry(messageId, newsletterBatchId, toEmail, recipientData, formatedContents)
+        log.info({ messageId, siteId }, "email sent")
+    } catch (e) {
+        const tempMessageId = randomUUID()
+        log.error({ err: e, tempMessageId, siteId }, "SES send failed, recording error entry")
+        await createNewsletterErrorEntry(tempMessageId, String(e), emailBatchId, toEmail, recipientData, formatedContents)
+        return { errorMessage: e }
+    }
+}
+
+async function sendMail(siteId: string, newsletterBatchId: string) {
+    const contents = await getNewsletterContent(newsletterBatchId)
     if (!contents) {
-        throw new Error(`Newsletter content not found for batch id: ${dbId}`)
+        throw new Error(`Newsletter content not found for batch id: ${newsletterBatchId}`)
     }
     const sendEmailRequests = preparePayload(contents, siteId)
-    const batchId = contents["v:email-id"]
-    for (const requests of sendEmailRequests) {
-        try {
-            const cmd = new SendEmailCommand(requests)
-            const resp = await sesNewsletterClient().send(cmd)
-            const messageId = resp.MessageId as string
-            await createNewsletterEntry(messageId, dbId, requests)
-            log.info({ messageId, siteId }, "email sent")
-        } catch (e) {
-            log.error(e, "error occurred at sendMail")
-            await createNewsletterErrorEntry(String(e), siteId, batchId, requests)
-        }
-    }
-    return { batchId }
+    const emailBatchId = contents["v:email-id"]
+
+    const RATE_LIMIT = Number(process.env.RATE_LIMIT) || 20
+    const MAX_CONCURRENT = Number(process.env.MAX_CONCURRENT) || 100
+    const q = createQueue({ rateLimit: RATE_LIMIT, maxConcurrent: MAX_CONCURRENT })
+
+    log.info({ emailCount: sendEmailRequests.length }, "Adding items to queue")
+    sendEmailRequests.forEach(prepared => {
+        q.addToQueue(
+            () => sendSingleMail(prepared, newsletterBatchId, siteId, emailBatchId),
+            emailBatchId
+        )
+    })
+
+    const results = await q.waitUntilFinished()
+    log.info({ results }, "Finished queue")
+
+    return { emailBatchId }
 }
 
 async function deleteMessage(receiptHandle?: string) {
@@ -95,7 +127,7 @@ export async function validateAndSend(message: Message) {
 
         const result = await sendMail(siteId, message.Body)
 
-        if (result.batchId) {
+        if ("batchId" in result) {
             await sqsClient().send(
                 new DeleteMessageCommand({
                     QueueUrl: QUEUE_URL.NEWSLETTER,
@@ -104,6 +136,6 @@ export async function validateAndSend(message: Message) {
             )
         }
     } catch (e) {
-        log.error({ error: e, batchId: message.Body }, "error occurred at validateAndSend")
+        log.error({ err: e, batchId: message.Body }, "error occurred at validateAndSend")
     }
 }
