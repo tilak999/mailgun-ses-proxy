@@ -12,11 +12,22 @@ export async function processNewsletterEmailEvents(response: ReceiveMessageComma
     for (const msg of response.Messages) {
         if (msg.Body && msg.MessageId) {
             try {
-                const result = parseNotificationEvent(msg.MessageId, msg.Body)
-                const message = await getNewsletterMessage(msg.MessageId)
-                if (message) {
-                    await saveNewsletterNotification(result)
+                const receiveCount = parseInt(msg.Attributes?.ApproximateReceiveCount || "0")
+                if (receiveCount > 3) {
+                    log.error({ messageId: msg.MessageId, receiveCount }, "event exceeded max retries, deleting from queue")
+                    await sqsClient().send(new DeleteMessageCommand({
+                        QueueUrl: QUEUE_URL.NEWSLETTER_NOTIFICATION,
+                        ReceiptHandle: msg.ReceiptHandle,
+                    }))
+                    continue
                 }
+
+                const result = parseNotificationEvent(msg.MessageId, msg.Body)
+                const message = await getNewsletterMessage(result.messageId)
+                if (!message) {
+                    throw new Error(`Message ${result.messageId} not found in DB, skipping deletion to retry later`)
+                }
+                await saveNewsletterNotification(result)
                 const command = new DeleteMessageCommand({
                     QueueUrl: QUEUE_URL.NEWSLETTER_NOTIFICATION,
                     ReceiptHandle: msg.ReceiptHandle,

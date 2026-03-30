@@ -22,15 +22,19 @@ export async function processNewsletterQueue() {
     }
     const command = new ReceiveMessageCommand(input)
     while (true) {
-        let { Messages } = await sqsClient().send(command)
-        if (Messages && Messages.length > 0) {
-            for (const message of Messages) {
-                try {
-                    await validateAndSend(message)
-                } catch (e) {
-                    log.error(e, `[processNewsletterQueue] Failed to process message ${message.MessageId}`)
+        try {
+            const { Messages } = await sqsClient().send(command)
+            if (Messages && Messages.length > 0) {
+                for (const message of Messages) {
+                    try {
+                        await validateAndSend(message)
+                    } catch (e) {
+                        log.error(e, `[processNewsletterQueue] Failed to process message ${message.MessageId}`)
+                    }
                 }
             }
+        } catch (e) {
+            log.error(e, "[processNewsletterQueue] Error polling SQS, will retry")
         }
     }
 }
@@ -42,7 +46,10 @@ export async function processNewsletterEventsQueue() {
     log.info("[background] Processing newsletter events queue")
     const input = {
         MessageAttributeNames: ["All"],
-        MessageSystemAttributeNames: [MessageSystemAttributeName.SentTimestamp],
+        MessageSystemAttributeNames: [
+            MessageSystemAttributeName.SentTimestamp,
+            MessageSystemAttributeName.ApproximateReceiveCount
+        ],
         QueueUrl: QUEUE_URL.NEWSLETTER_NOTIFICATION,
         VisibilityTimeout: 30,
         WaitTimeSeconds: 20,

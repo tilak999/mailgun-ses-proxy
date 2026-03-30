@@ -101,7 +101,7 @@ export async function getNewsletterContent(newsletterBatchId: string) {
 }
 
 export async function saveSystemEmailEvent(event: NotificationEvent) {
-    return prisma.newsletterNotifications.create({
+    return prisma.systemMailNotifications.create({
         data: {
             messageId: event.messageId,
             rawEvent: event.raw,
@@ -114,6 +114,12 @@ export async function saveSystemEmailEvent(event: NotificationEvent) {
 
 export async function getNewsletterMessage(messageId: string) {
     return prisma.newsletterMessages.findUnique({
+        where: { messageId }
+    })
+}
+
+export async function getSystemMessage(messageId: string) {
+    return prisma.systemMails.findUnique({
         where: { messageId }
     })
 }

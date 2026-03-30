@@ -17,128 +17,152 @@ import {
 import { createQueue } from "./utils/queue"
 
 const log = logger.child({ service: "service:newsletter-service" })
-const PERSIST_NEWSLETTER_FORMATTED_CONTENTS = shouldPersistNewsletterFormattedContents()
+const PERSIST_FORMATTED_CONTENTS = shouldPersistNewsletterFormattedContents()
+const MAX_RECEIVE_COUNT = 3
 
+// ─── Public API ──────────────────────────────────────────────
+
+/**
+ * Saves a newsletter batch to the DB and enqueues it to SQS for background processing.
+ */
 export async function addNewsletterToQueue(message: MailgunMessage, siteId: string) {
     if (!message) throw new Error("Message body is empty or invalid.")
-    log.debug({ message }, "sending message body to SQS")
 
-    const result = await createNewsletterBatchEntry(siteId, message)
-    const params = {
+    const { id } = await createNewsletterBatchEntry(siteId, message)
+    const response = await sqsClient().send(new SendMessageCommand({
         QueueUrl: QUEUE_URL.NEWSLETTER,
-        MessageBody: String(result.id),
+        MessageBody: String(id),
         MessageAttributes: {
-            siteId: {
-                DataType: "String",
-                StringValue: siteId,
-            },
-            from: {
-                DataType: "String",
-                StringValue: message.from,
-            },
+            siteId: { DataType: "String", StringValue: siteId },
+            from: { DataType: "String", StringValue: message.from },
         },
-    }
-    const command = new SendMessageCommand(params)
-    const response = await sqsClient().send(command)
+    }))
+
+    log.info({ batchId: message["v:email-id"], messageId: response.MessageId }, "newsletter queued to SQS")
     return { batchId: message["v:email-id"], messageId: response.MessageId }
 }
 
-async function sendSingleMail(prepared: PreparedEmail, newsletterBatchId: string, siteId: string, emailBatchId: string) {
+/**
+ * Processes a single SQS message: validates, sends all emails, handles retries.
+ *
+ * Retry strategy:
+ *  - On success → message is deleted from SQS
+ *  - On partial failure → message stays in SQS for re-delivery;
+ *    already-sent recipients are skipped via idempotency check
+ *  - After MAX_RECEIVE_COUNT retries → message is deleted to prevent infinite loops
+ */
+export async function validateAndSend(message: Message) {
+    const batchId = message.Body
+    const siteId = message.MessageAttributes?.["siteId"]?.StringValue
+    const from = message.MessageAttributes?.["from"]?.StringValue
+
+    if (!batchId || !siteId || !from) {
+        log.error({ message: safeStringify(message) }, "invalid or incomplete SQS message, discarding")
+        await deleteFromQueue(message.ReceiptHandle)
+        return
+    }
+
+    const receiveCount = parseInt(message.Attributes?.ApproximateReceiveCount || "0")
+    if (receiveCount > MAX_RECEIVE_COUNT) {
+        log.error({ batchId, receiveCount }, "batch exceeded max retries, discarding")
+        await deleteFromQueue(message.ReceiptHandle)
+        return
+    }
+
+    try {
+        await processBatch(siteId, batchId)
+        await deleteFromQueue(message.ReceiptHandle)
+    } catch (e) {
+        // Leave the message in SQS — it will be re-delivered after the visibility timeout.
+        // On retry, already-sent recipients are skipped via the idempotency check.
+        log.error({ err: e, batchId, receiveCount }, "batch processing failed, will retry")
+    }
+}
+
+// ─── Internal: Batch Processing ──────────────────────────────
+
+/**
+ * Loads a newsletter batch from the DB and sends all emails via a rate-limited concurrent queue.
+ * Throws if any recipients fail, so the SQS message is kept for retry.
+ */
+async function processBatch(siteId: string, newsletterBatchId: string) {
+    const contents = await getNewsletterContent(newsletterBatchId)
+    if (!contents) {
+        throw new Error(`Newsletter batch not found: ${newsletterBatchId}`)
+    }
+
+    const emails = preparePayload(contents, siteId)
+    const emailBatchId = contents["v:email-id"]
+
+    log.info({ emailCount: emails.length, emailBatchId }, "processing newsletter batch")
+
+    const rateLimit = Number(process.env.RATE_LIMIT) || 20
+    const maxConcurrent = Number(process.env.MAX_CONCURRENT) || 100
+    const queue = createQueue({ rateLimit, maxConcurrent })
+
+    for (const prepared of emails) {
+        queue.addToQueue(
+            () => sendSingleEmail(prepared, newsletterBatchId, siteId, emailBatchId),
+            emailBatchId
+        )
+    }
+
+    const results = await queue.waitUntilFinished()
+    log.info({
+        sent: results.settledCount - results.failedCount,
+        failed: results.failedCount,
+        durationMs: Math.round(results.totalDuration),
+    }, "newsletter batch completed")
+
+    if (results.failedCount > 0) {
+        throw new Error(`${results.failedCount}/${emails.length} emails failed in batch ${emailBatchId}`)
+    }
+}
+
+// ─── Internal: Single Email ──────────────────────────────────
+
+/**
+ * Sends a single email via SES with idempotency protection.
+ * - Checks if the recipient was already sent in this batch (prevents duplicates on retry)
+ * - On success, records in `newsletterMessages`
+ * - On failure, records in `newsletterErrors` and re-throws for the queue to track
+ */
+async function sendSingleEmail(
+    prepared: PreparedEmail,
+    newsletterBatchId: string,
+    siteId: string,
+    emailBatchId: string
+) {
     const { request, recipientVariables } = prepared
     const toEmail = request.Destination?.ToAddresses?.join() || ""
     const recipientData = JSON.stringify({ toEmail, variables: recipientVariables })
-    const formatedContents = PERSIST_NEWSLETTER_FORMATTED_CONTENTS ? safeStringify(request) : ""
+    const formattedContents = PERSIST_FORMATTED_CONTENTS ? safeStringify(request) : ""
 
-    // Idempotency: skip recipients already sent in this batch
-    if (toEmail) {
-        const alreadySent = await checkNewsletterAlreadySent(newsletterBatchId, toEmail)
-        if (alreadySent) {
-            log.info({ toEmail, newsletterBatchId }, "skipping already-sent recipient")
-            return
-        }
+    // Idempotency: skip if this recipient was already sent in a previous attempt
+    if (toEmail && await checkNewsletterAlreadySent(newsletterBatchId, toEmail)) {
+        log.info({ toEmail, newsletterBatchId }, "skipping already-sent recipient")
+        return
     }
 
     try {
-        const cmd = new SendEmailCommand(request)
-        const resp = await sesNewsletterClient().send(cmd)
+        const resp = await sesNewsletterClient().send(new SendEmailCommand(request))
         const messageId = resp.MessageId as string
-        await createNewsletterEntry(messageId, newsletterBatchId, toEmail, recipientData, formatedContents)
-        log.info({ messageId, siteId }, "email sent")
+        await createNewsletterEntry(messageId, newsletterBatchId, toEmail, recipientData, formattedContents)
+        log.info({ messageId, toEmail, siteId }, "email sent")
     } catch (e) {
-        const tempMessageId = randomUUID()
-        log.error({ err: e, tempMessageId, siteId }, "SES send failed, recording error entry")
-        await createNewsletterErrorEntry(tempMessageId, String(e), emailBatchId, toEmail, recipientData, formatedContents)
-        return { errorMessage: e }
+        const errorId = randomUUID()
+        log.error({ err: e, errorId, toEmail, siteId }, "SES send failed")
+        await createNewsletterErrorEntry(errorId, String(e), emailBatchId, toEmail, recipientData, formattedContents)
+        throw e // Re-throw so the queue tracks this as a failure
     }
 }
 
-async function sendMail(siteId: string, newsletterBatchId: string) {
-    const contents = await getNewsletterContent(newsletterBatchId)
-    if (!contents) {
-        throw new Error(`Newsletter content not found for batch id: ${newsletterBatchId}`)
-    }
-    const sendEmailRequests = preparePayload(contents, siteId)
-    const emailBatchId = contents["v:email-id"]
+// ─── Internal: SQS Helpers ───────────────────────────────────
 
-    const RATE_LIMIT = Number(process.env.RATE_LIMIT) || 20
-    const MAX_CONCURRENT = Number(process.env.MAX_CONCURRENT) || 100
-    const q = createQueue({ rateLimit: RATE_LIMIT, maxConcurrent: MAX_CONCURRENT })
-
-    log.info({ emailCount: sendEmailRequests.length }, "Adding items to queue")
-    sendEmailRequests.forEach(prepared => {
-        q.addToQueue(
-            () => sendSingleMail(prepared, newsletterBatchId, siteId, emailBatchId),
-            emailBatchId
-        )
-    })
-
-    const results = await q.waitUntilFinished()
-    log.info({ results }, "Finished queue")
-
-    return { emailBatchId }
-}
-
-async function deleteMessage(receiptHandle?: string) {
+async function deleteFromQueue(receiptHandle?: string) {
     if (!receiptHandle) return
-    await sqsClient().send(
-        new DeleteMessageCommand({
-            QueueUrl: QUEUE_URL.NEWSLETTER,
-            ReceiptHandle: receiptHandle,
-        })
-    )
+    await sqsClient().send(new DeleteMessageCommand({
+        QueueUrl: QUEUE_URL.NEWSLETTER,
+        ReceiptHandle: receiptHandle,
+    }))
 }
-
-export async function validateAndSend(message: Message) {
-    if (!message.MessageAttributes || !message.Body) {
-        log.error({ message: safeStringify(message) }, "invalid message, deleting from queue")
-        await deleteMessage(message.ReceiptHandle)
-        return
-    }
-
-    const siteId = message.MessageAttributes["siteId"]?.StringValue
-    const from = message.MessageAttributes["from"]?.StringValue
-
-    if (!siteId || !from) {
-        log.error({ message: safeStringify(message) }, "missing required message attributes, deleting from queue")
-        await deleteMessage(message.ReceiptHandle)
-        return
-    }
-
-    try {
-        const receiveCount = parseInt(message.Attributes?.ApproximateReceiveCount || "0")
-        if (receiveCount > 3) {
-            await deleteMessage(message.ReceiptHandle)
-            log.error({ batchId: message.Body, receiveCount }, "message exceeded max retries, deleting from queue")
-            return
-        }
-
-        await sendMail(siteId, message.Body)
-
-        // Delete from queue AFTER successful processing
-        await deleteMessage(message.ReceiptHandle)
-    } catch (e) {
-        // Don't delete — let SQS re-deliver so failed recipients are retried
-        log.error({ err: e, batchId: message.Body }, "error occurred at validateAndSend, will retry")
-    }
-}
-
