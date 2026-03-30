@@ -7,6 +7,7 @@ import { safeStringify } from "../lib/core/common"
 import logger from "../lib/core/logger"
 import { QUEUE_URL, sesNewsletterClient, sqsClient } from "./aws/awsHelper"
 import {
+    checkNewsletterAlreadySent,
     createNewsletterBatchEntry,
     createNewsletterEntry,
     createNewsletterErrorEntry,
@@ -47,6 +48,16 @@ async function sendSingleMail(prepared: PreparedEmail, newsletterBatchId: string
     const toEmail = request.Destination?.ToAddresses?.join() || ""
     const recipientData = JSON.stringify({ toEmail, variables: recipientVariables })
     const formatedContents = PERSIST_NEWSLETTER_FORMATTED_CONTENTS ? safeStringify(request) : ""
+
+    // Idempotency: skip recipients already sent in this batch
+    if (toEmail) {
+        const alreadySent = await checkNewsletterAlreadySent(newsletterBatchId, toEmail)
+        if (alreadySent) {
+            log.info({ toEmail, newsletterBatchId }, "skipping already-sent recipient")
+            return
+        }
+    }
+
     try {
         const cmd = new SendEmailCommand(request)
         const resp = await sesNewsletterClient().send(cmd)
@@ -115,27 +126,19 @@ export async function validateAndSend(message: Message) {
 
     try {
         const receiveCount = parseInt(message.Attributes?.ApproximateReceiveCount || "0")
-        if (receiveCount > 5) {
-            await sqsClient().send(
-                new DeleteMessageCommand({
-                    QueueUrl: QUEUE_URL.NEWSLETTER,
-                    ReceiptHandle: message.ReceiptHandle,
-                })
-            )
-            throw new Error("Message has been received more than 5 times, skipping it.")
+        if (receiveCount > 3) {
+            await deleteMessage(message.ReceiptHandle)
+            log.error({ batchId: message.Body, receiveCount }, "message exceeded max retries, deleting from queue")
+            return
         }
 
-        const result = await sendMail(siteId, message.Body)
+        await sendMail(siteId, message.Body)
 
-        if ("batchId" in result) {
-            await sqsClient().send(
-                new DeleteMessageCommand({
-                    QueueUrl: QUEUE_URL.NEWSLETTER,
-                    ReceiptHandle: message.ReceiptHandle,
-                })
-            )
-        }
+        // Delete from queue AFTER successful processing
+        await deleteMessage(message.ReceiptHandle)
     } catch (e) {
-        log.error({ err: e, batchId: message.Body }, "error occurred at validateAndSend")
+        // Don't delete — let SQS re-deliver so failed recipients are retried
+        log.error({ err: e, batchId: message.Body }, "error occurred at validateAndSend, will retry")
     }
 }
+

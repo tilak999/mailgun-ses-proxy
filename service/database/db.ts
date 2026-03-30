@@ -81,6 +81,17 @@ export function saveNewsletterNotification(event: NotificationEvent) {
     })
 }
 
+export async function checkNewsletterAlreadySent(batchId: string, toEmail: string) {
+    const existing = await prisma.newsletterMessages.findFirst({
+        where: {
+            newsletterBatchId: batchId,
+            toEmail,
+        },
+        select: { id: true },
+    })
+    return !!existing
+}
+
 export async function getNewsletterContent(newsletterBatchId: string) {
     const result = await prisma.newsletterBatch.findUnique({
         where: { id: newsletterBatchId },

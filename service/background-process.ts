@@ -17,7 +17,7 @@ export async function processNewsletterQueue() {
         MessageSystemAttributeNames: [MessageSystemAttributeName.SentTimestamp,
         MessageSystemAttributeName.ApproximateReceiveCount],
         QueueUrl: QUEUE_URL.NEWSLETTER,
-        VisibilityTimeout: 30,
+        VisibilityTimeout: 900,
         WaitTimeSeconds: 20,
     }
     const command = new ReceiveMessageCommand(input)
