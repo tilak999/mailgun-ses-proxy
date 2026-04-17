@@ -3,12 +3,10 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../lib/generated"
 }
 
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL")
 }
 
 model NewsletterBatch {
